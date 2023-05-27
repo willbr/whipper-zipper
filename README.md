@@ -36,3 +36,15 @@ I need to learn about X86 assembly
 # show code and output at the same time
 
 $output :: $formula
+
+
+# modal editing
+vi keys
+
+# use space as tab
+
+type:
+
+    first-name will
+
+and it creates values over two columns
