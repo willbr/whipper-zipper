@@ -1,3 +1,5 @@
+import re
+
 import tkinter as tk
 from tkinter import font
 
@@ -25,7 +27,8 @@ def on_enter(event):
         next_widget.focus_set()
 
 window.bind('<Return>', on_enter)
-window.bind('<Escape>', lambda e: window.focus())
+#window.bind('<Escape>', lambda e: window.focus())
+window.bind('<Escape>', lambda e: exit(0))
 
 
 def on_enter(event):
@@ -42,14 +45,34 @@ def on_enter(event):
 
 def on_leave(event):
     widget = event.widget
+    widget.configure(background='white')
+
     expr = widget.get()
     #print(f'{expr=}')
     widget.formula = expr
-    try:
-        new_value = eval(expr)
-    except SyntaxError:
+
+    failed = True
+    orig_expr = expr
+
+    for i in range(10):
+        try:
+            new_value = eval(expr)
+            failed = False
+        except SyntaxError:
+            return
+        except NameError as ne:
+            name = ne.name
+            col_name, row = name
+            col = "_abc".find(col_name)
+
+            ref_widget = window.grid_slaves(row=int(row), column=int(col))[0]
+            ref_value  = ref_widget.get()
+            expr = re.sub(f'\\b{name}\\b', ref_value, expr, re.IGNORECASE)
+            continue
+
+    if failed:
         return
-    widget.configure(background='white')
+
     widget.delete(0, tk.END)
     widget.insert(0, new_value)
 
