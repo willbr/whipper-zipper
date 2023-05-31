@@ -26,10 +26,33 @@ def on_enter(event):
         next_widget = rows[next_row-1][current_col-1]
         next_widget.focus_set()
 
+resizing = False
+def on_resize(event):
+    global resizing
+    if event.widget != window:
+        return
+
+    if resizing:
+       return
+
+    resizing = True
+
+    window.update_idletasks()
+
+    new_size = max(10, int(window.winfo_width() / 40))
+
+    for widget in window.winfo_children():
+        if isinstance(widget, tk.Widget):
+            widget.configure(font=("Consolas", new_size))
+
+    window.update()
+
+    resizing = False
+
 window.bind('<Return>', on_enter)
 #window.bind('<Escape>', lambda e: window.focus())
 window.bind('<Escape>', lambda e: exit(0))
-
+window.bind('<Configure>', on_resize)
 
 def on_enter(event):
     widget = event.widget
