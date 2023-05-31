@@ -84,6 +84,27 @@ def is_number(s):
 #print(is_number('3.14'))
 #print(is_number('10'))
 
+def resolve_range_refs(s):
+    matched = re.match(r'\w+:\w+', s)
+    if not matched:
+        return s
+    ref = matched.group()
+    return s
+
+i = 'a1:a1'
+er = 'a1'
+r = resolve_range_refs(i)
+if r != er:
+    print(f'{i=}, {er=}, {r=}')
+    assert False
+
+i = 'a1:a3'
+er = '[a1,a2,a3]'
+r = resolve_range_refs(i)
+if r != er:
+    print(f'{i=}, {er=}, {r=}')
+    assert False
+
 def on_leave(event):
     widget = event.widget
     widget.configure(background='white')
@@ -92,16 +113,23 @@ def on_leave(event):
     #print(f'{expr=}')
     widget.formula = expr
 
+    if expr == '':
+        return
+
     failed = True
     orig_expr = expr
+
+    expr = resolve_range_refs(expr)
 
     for i in range(10):
         try:
             new_value = eval(expr)
             failed = False
-        except SyntaxError:
+        except SyntaxError as se:
+            print(se.args)
             return
         except NameError as ne:
+            print(ne)
             name = ne.name
             col_name, row = name
             col = "_abc".find(col_name)
