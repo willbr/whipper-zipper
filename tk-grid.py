@@ -118,7 +118,7 @@ def add_row(n):
     row = []
     for i in range(1, 4):
         e = tk.Entry(window)
-        e.grid(row=n, column=i, padx=5)
+        e.grid(row=n, column=i, padx=0, sticky="nsew")
         e.bind('<Enter>', on_enter)
         e.bind('<Leave>', on_leave)
         e.bind('<FocusIn>', on_enter)
@@ -130,11 +130,11 @@ def add_row(n):
 for i in range(1, 10):
     add_row(i)
 
-for i in range(3):
-    window.grid_columnconfigure(i, weight=1)
+for i in range(1, 4):
+    window.grid_columnconfigure(i, minsize=80, weight=2)
 
-for i in range(len(rows)):
-    window.grid_rowconfigure(i+1, weight=1)
+for i in range(1, 10):
+    window.grid_rowconfigure(i, minsize=40, weight=2)
 
 rows[0][1].focus_set()
 
