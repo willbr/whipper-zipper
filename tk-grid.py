@@ -43,6 +43,24 @@ def on_enter(event):
     widget.insert(0, formula)
 
 
+def is_number(s):
+    try:
+        f = float(s)
+        return True
+    except ValueError:
+        pass
+
+    try:
+        i = int(s)
+        return True
+    except ValueError:
+        pass
+
+    return False
+
+#print(is_number('3.14'))
+#print(is_number('10'))
+
 def on_leave(event):
     widget = event.widget
     widget.configure(background='white')
@@ -72,6 +90,11 @@ def on_leave(event):
 
     if failed:
         return
+
+    if is_number(new_value):
+        widget.configure(justify='right')
+    else:
+        widget.configure(justify='left')
 
     widget.delete(0, tk.END)
     widget.insert(0, new_value)
