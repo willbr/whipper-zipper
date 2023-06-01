@@ -219,7 +219,7 @@ def on_leave(event):
             col = "_abc".find(col_name)
 
             ref_widget = window.grid_slaves(row=int(row), column=int(col))[0]
-            ref_value  = ref_widget.get()
+            ref_value  = repr(ref_widget.get())
             expr = re.sub(f'\\b{name}\\b', ref_value, expr, re.IGNORECASE)
             continue
 
