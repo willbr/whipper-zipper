@@ -254,8 +254,8 @@ def add_row(n):
     for i in range(1, 4):
         e = tk.Entry(window)
         e.grid(row=n, column=i, padx=0, sticky="nsew")
-        e.bind('<Enter>', on_enter)
-        e.bind('<Leave>', on_leave)
+        #e.bind('<Enter>', on_enter)
+        #e.bind('<Leave>', on_leave)
         e.bind('<FocusIn>', on_enter)
         e.bind('<FocusOut>', on_leave)
         row.append(e)
