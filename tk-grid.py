@@ -195,7 +195,7 @@ if r != er:
     assert False
 
 def resolve_refs(s):
-    matched = re.sub(r"(?<!')(\w+\d+)", r"cell_ref('\1')", s)
+    matched = re.sub(r"(?<!')([a-c]\d+)", r"cell_ref('\1')", s)
     return matched
 
 i  = "sum(cell_range_ref('a1', 'b2'))"
