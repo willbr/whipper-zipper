@@ -1,7 +1,12 @@
 # whipper-zipper
 Silly spreadsheet app
 
+# named relative refs
 
+    =sum(above)
+    =sum(below)
+    =sum(left)
+    =sum(right)
 
 # typed values?
 Everything is a double by default
@@ -18,7 +23,8 @@ Don't use VBA like excel, use worksheets!
 
 Define some cells as input, some as output and everything else is fair game.
 
-
+param('name', default_value)
+then the worksheet name becomes the function
 
 # auto name cells using the cell to their left
 
