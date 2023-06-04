@@ -91,8 +91,8 @@ def is_number(s):
 def to_rc(s):
     s = s.strip().lower()
     assert len(s) == 2
-    col = ord(s[0]) - ord('`')
-    row = int(s[1])
+    col = ord(s[0]) - ord('a') + 1
+    row = int(s[1]) 
     return (row, col)
 
 i = 'a1'
@@ -109,16 +109,7 @@ if r != er:
     print(f'{i=}, {er=}, {r=}')
     assert False
 
-i = 'c3'
-er = (3, 3)
-r = to_rc(i)
-if r != er:
-    print(f'{i=}, {er=}, {r=}')
-    assert False
-
 def cellname(r, c):
-    assert r > 0
-    assert c > 0
     lhs = chr(ord('a') + c - 1)
     return f'{lhs}{r}'
 
@@ -129,20 +120,24 @@ if r != er:
     print(f'{i=}, {er=}, {r=}')
     assert False
 
+i = (2, 2)
+er = 'b2'
+r = cellname(*i)
+if r != er:
+    print(f'{i=}, {er=}, {r=}')
+    assert False
+
 def resolve_range_refs(s):
-    #print(s)
     matched = re.search(r'(\w+):(\w+)', s)
     if not matched:
         #print(f'match failed: {s}')
         return s
     lhs, rhs = matched.groups()
-    #print(lhs, rhs)
     r1, c1 = to_rc(lhs)
     r2, c2 = to_rc(rhs)
     #print((r1,c1), (r2,c2))
     r1, r2 = sorted((r1, r2))
     c1, c2 = sorted((c1, c2))
-    #print((r1,c1), (r2,c2))
     cells = []
     for c in range(c1, c2+1):
         for r in range(r1, r2+1):
@@ -154,8 +149,8 @@ def resolve_range_refs(s):
     new_s = s.replace(ref, new_ref)
     return new_s
 
-i  = 'a1:b2'
-er = '[a1, a2, b1, b2]'
+i  = 'sum(a1:b3)'
+er = 'sum([a1, a2, a3, b1, b2, b3])'
 r  = resolve_range_refs(i)
 
 if r != er:
