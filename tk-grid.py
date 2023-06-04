@@ -12,19 +12,15 @@ default_font.configure(family='Consolas', size=24)
 window.option_add("*Font", default_font)
 window.configure(padx=5, pady=5)
 
+rows = []
+
+def get_rc(widget):
+    r = int(widget.grid_info()['row'])
+    c = int(widget.grid_info()['column'])
+    return (r, c)
 
 def on_enter(event):
-    current_widget = event.widget
-    current_row = int(current_widget.grid_info()['row'])
-    current_col = int(current_widget.grid_info()['column'])
-
-    #print(current_row, current_col)
-
-    next_row = current_row + 1
-
-    if next_row <= len(rows):
-        next_widget = rows[next_row-1][current_col-1]
-        next_widget.focus_set()
+    select_cell_by_offset(event.widget, 0, 1)
 
 resizing = False
 def on_resize(event):
@@ -49,9 +45,42 @@ def on_resize(event):
 
     resizing = False
 
+
+def select_cell_by_offset(widget, x, y):
+    r, c = get_rc(widget)
+
+    next_row = r + y
+    next_col = c + x
+
+    next_row %= len(rows)
+    next_col %= 3
+
+    next_widget = rows[next_row-1][next_col-1]
+    next_widget.focus_set()
+
+
+def move_cursor(event):
+    if event.keysym == 'h':
+        x, y = -1, 0
+    elif event.keysym == 'j':
+        x, y = 0, 1
+    elif event.keysym == 'k':
+        x, y = 0, -1
+    elif event.keysym == 'l':
+        x, y = 1, 0
+    else:
+        return
+
+    select_cell_by_offset(event.widget, x, y)
+
+
 window.bind('<Return>', on_enter)
 #window.bind('<Escape>', lambda e: window.focus())
-window.bind('<Escape>', lambda e: exit(0))
+#window.bind('<Escape>', lambda e: exit(0))
+window.bind('<Control-h>', move_cursor)
+window.bind('<Control-j>', move_cursor)
+window.bind('<Control-k>', move_cursor)
+window.bind('<Control-l>', move_cursor)
 window.bind('<Configure>', on_resize)
 
 def on_enter(event):
@@ -197,7 +226,7 @@ def on_leave(event):
     orig_expr = expr
 
     expr = resolve_range_refs(expr)
-    #print(expr)
+    print(expr)
 
     for i in range(10):
         try:
@@ -205,16 +234,16 @@ def on_leave(event):
             failed = False
             break
         except SyntaxError as se:
-            #print(se.args)
+            print(se.args)
             return
         except NameError as ne:
-            #print(ne)
+            print(ne)
             name = ne.name
             col_name, row = name
             col = "_abc".find(col_name)
 
             ref_widget = window.grid_slaves(row=int(row), column=int(col))[0]
-            ref_value  = repr(ref_widget.get())
+            ref_value  = ref_widget.get()
             expr = re.sub(f'\\b{name}\\b', ref_value, expr, re.IGNORECASE)
             continue
 
@@ -240,7 +269,6 @@ h2.grid(row=0, column=2)
 h3 = tk.Label(window, text="c")
 h3.grid(row=0, column=3)
 
-rows = []
 def add_row(n):
     r1 = tk.Label(window, text=str(n))
     r1.grid(row=n, column=0, padx=10, pady=5)
@@ -249,8 +277,8 @@ def add_row(n):
     for i in range(1, 4):
         e = tk.Entry(window)
         e.grid(row=n, column=i, padx=0, sticky="nsew")
-        #e.bind('<Enter>', on_enter)
-        #e.bind('<Leave>', on_leave)
+        e.bind('<Enter>', on_enter)
+        e.bind('<Leave>', on_leave)
         e.bind('<FocusIn>', on_enter)
         e.bind('<FocusOut>', on_leave)
         row.append(e)
