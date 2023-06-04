@@ -159,29 +159,11 @@ if r != er:
     assert False
 
 def resolve_range_refs(s):
-    matched = re.search(r'(\w+):(\w+)', s)
-    if not matched:
-        #print(f'match failed: {s}')
-        return s
-    lhs, rhs = matched.groups()
-    r1, c1 = to_rc(lhs)
-    r2, c2 = to_rc(rhs)
-    #print((r1,c1), (r2,c2))
-    r1, r2 = sorted((r1, r2))
-    c1, c2 = sorted((c1, c2))
-    cells = []
-    for c in range(c1, c2+1):
-        for r in range(r1, r2+1):
-            cn = cellname(r, c)
-            cells.append(cn)
-    #print(cells)
-    ref = matched.group()
-    new_ref = '[' + (', '.join(cells)) + ']'
-    new_s = s.replace(ref, new_ref)
-    return new_s
+    matched = re.sub(r'(\w+):(\w+)', r"cell_range_ref('\1', '\2')", s)
+    return matched
 
 i  = 'sum(a1:b3)'
-er = 'sum([a1, a2, a3, b1, b2, b3])'
+er = "sum(cell_range_ref('a1', 'b3'))"
 r  = resolve_range_refs(i)
 
 if r != er:
@@ -189,7 +171,7 @@ if r != er:
     assert False
 
 i  = 'sum(a1:a3)'
-er = 'sum([a1, a2, a3])'
+er = "sum(cell_range_ref('a1', 'a3'))"
 r  = resolve_range_refs(i)
 
 if r != er:
@@ -197,7 +179,7 @@ if r != er:
     assert False
 
 i  = 'a1:a2'
-er = '[a1, a2]'
+er = "cell_range_ref('a1', 'a2')"
 r  = resolve_range_refs(i)
 
 if r != er:
@@ -205,52 +187,95 @@ if r != er:
     assert False
 
 i  = 'a1:a3'
-er = '[a1, a2, a3]'
+er = "cell_range_ref('a1', 'a3')"
 r  = resolve_range_refs(i)
 
 if r != er:
     print(f'{i=}, {er=}, {r=}')
     assert False
 
+def resolve_refs(s):
+    matched = re.sub(r"(?<!')(\w+\d+)", r"cell_ref('\1')", s)
+    return matched
+
+i  = "sum(cell_range_ref('a1', 'b2'))"
+er = "sum(cell_range_ref('a1', 'b2'))"
+r  = resolve_refs(i)
+
+if r != er:
+    print(f'{i=}, {er=}, {r=}')
+    assert False
+
+i  = 'a1 + b1 + c1'
+er = "cell_ref('a1') + cell_ref('b1') + cell_ref('c1')"
+r  = resolve_refs(i)
+
+if r != er:
+    print(f'{i=}, {er=}, {r=}')
+    assert False
+
+i  = 'sum([a1, b2])'
+er = "sum([cell_ref('a1'), cell_ref('b2')])"
+r  = resolve_refs(i)
+
+if r != er:
+    print(f'{i=}, {er=}, {r=}')
+    assert False
+
+def cell_range_ref(lhs, rhs):
+    #print(lhs, rhs)
+    r1, c1 = to_rc(lhs)
+    r2, c2 = to_rc(rhs)
+    #print(lhs, (r1, c1), rhs, (r2, c2))
+
+    #next_widget = rows[next_row-1][next_col-1]
+    cells = []
+    for c in range(c1, c2+1):
+        for r in range(r1, r2+1):
+            widget = rows[r-1][c-1]
+            val = getattr(widget, 'value', 0)
+            cells.append(val)
+    #print(cells)
+    return cells
+
+def cell_ref(ref):
+    r, c = to_rc(ref)
+    #print(ref, (r, c))
+    widget = rows[r-1][c-1]
+    return getattr(widget, 'value', 0)
+
+def resolve_expr(s):
+    expr = s
+    expr = resolve_range_refs(expr)
+    expr = resolve_refs(expr)
+    return expr
+
+i  = 'sum(a1:b2)'
+er = "sum(cell_range_ref('a1', 'b2'))"
+r  = resolve_expr(i)
+
+if r != er:
+    print(f' {i=}\n{er=}\n {r=}')
+    assert False
 
 def on_leave(event):
     widget = event.widget
     widget.configure(background='white')
 
-    expr = widget.get()
+    raw_expr = widget.get()
     #print(f'{expr=}')
-    widget.formula = expr
+    widget.formula = raw_expr
 
-    if expr == '':
+    if raw_expr == '':
+        widget.value = 0
         return
 
     failed = True
-    orig_expr = expr
+    expr = resolve_expr(raw_expr.lstrip('='))
 
-    expr = resolve_range_refs(expr)
     print(expr)
-
-    for i in range(10):
-        try:
-            new_value = eval(expr)
-            failed = False
-            break
-        except SyntaxError as se:
-            print(se.args)
-            return
-        except NameError as ne:
-            print(ne)
-            name = ne.name
-            col_name, row = name
-            col = "_abc".find(col_name)
-
-            ref_widget = window.grid_slaves(row=int(row), column=int(col))[0]
-            ref_value  = ref_widget.get()
-            expr = re.sub(f'\\b{name}\\b', ref_value, expr, re.IGNORECASE)
-            continue
-
-    if failed:
-        return
+    new_value = eval(expr)
+    widget.value = new_value
 
     if is_number(new_value):
         widget.configure(justify='right')
@@ -258,7 +283,7 @@ def on_leave(event):
         widget.configure(justify='left')
 
     widget.delete(0, tk.END)
-    widget.insert(0, new_value)
+    widget.insert(0, repr(new_value))
 
 # add headers
 
