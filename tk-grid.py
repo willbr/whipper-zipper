@@ -195,7 +195,7 @@ if r != er:
     assert False
 
 def resolve_refs(s):
-    matched = re.sub(r"(?<!')(\w+\d+)", r"cell_ref('\1')", s)
+    matched = re.sub(r"(?<!')([a-c]\d+)", r"cell_ref('\1')", s)
     return matched
 
 i  = "sum(cell_range_ref('a1', 'b2'))"
@@ -262,7 +262,7 @@ def on_leave(event):
     widget = event.widget
     widget.configure(background='white')
 
-    raw_expr = widget.get()
+    raw_expr = widget.get().lstrip('=')
     #print(f'{expr=}')
     widget.formula = raw_expr
 
@@ -270,10 +270,19 @@ def on_leave(event):
         widget.value = 0
         return
 
-    failed = True
-    expr = resolve_expr(raw_expr.lstrip('='))
+    if raw_expr == 'sum above':
+        r, c = get_rc(widget)
+        r = max(1, r - 1)
+        if r == 1:
+            above = cellname(r, c) + ':' + cellname(r, c)
+        else:
+            above = cellname(1, c) + ':' + cellname(r, c)
+        raw_expr = f'sum({above})'
 
-    print(expr)
+    failed = True
+    expr = resolve_expr(raw_expr)
+
+    #print(expr)
     new_value = eval(expr)
     widget.value = new_value
 
