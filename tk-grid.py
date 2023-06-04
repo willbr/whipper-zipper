@@ -93,6 +93,8 @@ def on_enter(event):
 
     widget.delete(0, tk.END)
     widget.insert(0, formula)
+    widget.selection_range(0, 'end')
+    widget.icursor('end')
 
 
 def is_number(s):
