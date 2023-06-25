@@ -3,17 +3,31 @@ import re
 import tkinter as tk
 from tkinter import font
 
-number_of_rows    = 15
-number_of_columns = 8
+number_of_rows    = 20
+number_of_columns = 7
 
 window = tk.Tk()
 window.title('Grid Test')
 
 default_font = font.nametofont('TkDefaultFont')
-default_font.configure(family='Consolas', size=12)
+default_font.configure(family='Consolas', size=14)
 
 window.option_add("*Font", default_font)
 window.configure(padx=5, pady=5)
+
+formula_frame = tk.Frame(window)
+formula_frame.pack(side='top', fill='x')
+
+cell_name = tk.Entry(formula_frame)
+cell_name.pack(side='left')
+cell_name.insert(0, 'cell_name')
+
+formula_entry = tk.Entry(formula_frame)
+formula_entry.pack(side='left', expand=True, fill='x')
+formula_entry.insert(0, 'formula_entry')
+
+worksheet = tk.Frame(window)
+worksheet.pack(side='top')
 
 rows = []
 
@@ -40,7 +54,7 @@ def on_resize(event):
 
     new_size = max(12, int(window.winfo_width() / 60))
 
-    default_font.configure(family='Consolas', size=new_size)
+    #default_font.configure(family='Consolas', size=new_size)
 
     window.update()
 
@@ -54,7 +68,7 @@ def select_cell_by_offset(widget, x, y):
     next_col = c + x
 
     next_row %= len(rows)
-    next_col %= 3
+    next_col %= len(columns)
 
     next_widget = rows[next_row-1][next_col-1]
     next_widget.focus_set()
@@ -87,10 +101,20 @@ window.bind('<Configure>', on_resize)
 def on_enter(event):
     widget = event.widget
     widget.configure(background='lightblue')
+
+    r, c = get_rc(widget)
+    cell_name.delete(0, tk.END)
+    cell_name.insert(0, cellname(r, c))
+
     formula = getattr(widget, 'formula', None)
     if formula is None:
+        formula_entry.delete(0, tk.END)
+        formula_entry.insert(0, "")
         return
     #print(f'{formula=}')
+
+    formula_entry.delete(0, tk.END)
+    formula_entry.insert(0, formula)
 
     widget.delete(0, tk.END)
     widget.insert(0, formula)
@@ -298,26 +322,30 @@ def on_leave(event):
 # add headers
 
 headers = []
+columns = []
+
 for i in range(1, number_of_columns + 1):
     col_letter = chr(ord('a') + i - 1)
     window.grid_columnconfigure(i, minsize=80, weight=2)
-    col_header = tk.Label(window, text=col_letter)
+    col_header = tk.Label(worksheet, text=col_letter)
     col_header.grid(row=0, column=i)
     headers.append(col_header)
+    columns.append([])
 
 def add_row(n):
-    r1 = tk.Label(window, text=str(n))
+    r1 = tk.Label(worksheet, text=str(n))
     r1.grid(row=n, column=0, padx=10, pady=5)
 
     row = []
     for i in range(1, number_of_columns + 1):
-        e = tk.Entry(window)
+        e = tk.Entry(worksheet)
         e.grid(row=n, column=i, padx=0, sticky="nsew")
         #e.bind('<Enter>', on_enter)
         #e.bind('<Leave>', on_leave)
         e.bind('<FocusIn>', on_enter)
         e.bind('<FocusOut>', on_leave)
         row.append(e)
+        columns[i-1].append(e)
 
     rows.append(row)
 
@@ -326,7 +354,7 @@ for i in range(1, number_of_rows + 1):
 
 
 for i in range(1, number_of_rows + 1):
-    window.grid_rowconfigure(i, minsize=40, weight=2)
+    worksheet.grid_rowconfigure(i, minsize=40, weight=2)
 
 rows[0][1].focus_set()
 
