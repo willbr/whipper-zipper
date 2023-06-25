@@ -3,11 +3,14 @@ import re
 import tkinter as tk
 from tkinter import font
 
+number_of_rows    = 15
+number_of_columns = 8
+
 window = tk.Tk()
 window.title('Grid Test')
 
 default_font = font.nametofont('TkDefaultFont')
-default_font.configure(family='Consolas', size=24)
+default_font.configure(family='Consolas', size=12)
 
 window.option_add("*Font", default_font)
 window.configure(padx=5, pady=5)
@@ -35,11 +38,9 @@ def on_resize(event):
 
     window.update_idletasks()
 
-    new_size = max(10, int(window.winfo_width() / 40))
+    new_size = max(12, int(window.winfo_width() / 60))
 
-    for widget in window.winfo_children():
-        if isinstance(widget, tk.Widget):
-            widget.configure(font=("Consolas", new_size))
+    default_font.configure(family='Consolas', size=new_size)
 
     window.update()
 
@@ -296,38 +297,35 @@ def on_leave(event):
 
 # add headers
 
-h1 = tk.Label(window, text="a")
-h1.grid(row=0, column=1)
-
-h2 = tk.Label(window, text="b")
-h2.grid(row=0, column=2)
-
-h3 = tk.Label(window, text="c")
-h3.grid(row=0, column=3)
+headers = []
+for i in range(1, number_of_columns + 1):
+    col_letter = chr(ord('a') + i - 1)
+    window.grid_columnconfigure(i, minsize=80, weight=2)
+    col_header = tk.Label(window, text=col_letter)
+    col_header.grid(row=0, column=i)
+    headers.append(col_header)
 
 def add_row(n):
     r1 = tk.Label(window, text=str(n))
     r1.grid(row=n, column=0, padx=10, pady=5)
 
     row = []
-    for i in range(1, 4):
+    for i in range(1, number_of_columns + 1):
         e = tk.Entry(window)
         e.grid(row=n, column=i, padx=0, sticky="nsew")
-        e.bind('<Enter>', on_enter)
-        e.bind('<Leave>', on_leave)
+        #e.bind('<Enter>', on_enter)
+        #e.bind('<Leave>', on_leave)
         e.bind('<FocusIn>', on_enter)
         e.bind('<FocusOut>', on_leave)
         row.append(e)
 
     rows.append(row)
 
-for i in range(1, 10):
+for i in range(1, number_of_rows + 1):
     add_row(i)
 
-for i in range(1, 4):
-    window.grid_columnconfigure(i, minsize=80, weight=2)
 
-for i in range(1, 10):
+for i in range(1, number_of_rows + 1):
     window.grid_rowconfigure(i, minsize=40, weight=2)
 
 rows[0][1].focus_set()
