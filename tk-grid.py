@@ -145,8 +145,8 @@ def is_number(s):
 #print(is_number('10'))
 
 def to_rc(s):
-    s = s.strip().lower()
-    assert len(s) == 2
+    m = re.match('^(\w+?)(\d+)$' , s)
+    s = m.groups()
     col = ord(s[0]) - ord('a') + 1
     row = int(s[1]) 
     return (row, col)
