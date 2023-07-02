@@ -2,6 +2,8 @@ import re
 
 import tkinter as tk
 from tkinter import font
+from dataclasses import dataclass
+from typing import Any
 
 number_of_rows    = 20
 number_of_columns = 7
@@ -27,7 +29,7 @@ formula_entry.pack(side='left', expand=True, fill='x')
 formula_entry.insert(0, 'formula_entry')
 
 worksheet = tk.Frame(window)
-worksheet.pack(side='top')
+worksheet.pack(anchor='nw')
 
 rows = []
 
@@ -144,6 +146,11 @@ def is_number(s):
 #print(is_number('3.14'))
 #print(is_number('10'))
 
+@dataclass
+class TestSpec:
+    input_value: Any
+    expected_result: Any
+
 def to_rc(s):
     m = re.match('^(\w+?)(\d+)$' , s)
     s = m.groups()
@@ -151,19 +158,20 @@ def to_rc(s):
     row = int(s[1]) 
     return (row, col)
 
-i = 'a1'
-er = (1, 1)
-r = to_rc(i)
-if r != er:
-    print(f'{i=}, {er=}, {r=}')
-    assert False
+def test__to_rc():
+    tests = [
+            TestSpec('a1', (1, 1)),
+            TestSpec('b2', (2, 2)),
+            ]
+    for test in tests:
+        print(test)
+        test_result = to_rc(test.input_value)
+        if test_result != test.expected_result:
+            print(f'{test.input_value=}, {test.expected_result=}, {test_result=}')
+            assert False
 
-i = 'b2'
-er = (2, 2)
-r = to_rc(i)
-if r != er:
-    print(f'{i=}, {er=}, {r=}')
-    assert False
+test__to_rc()
+
 
 def cellname(r, c):
     lhs = chr(ord('a') + c - 1)
