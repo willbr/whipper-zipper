@@ -46,6 +46,16 @@ canvas_frame.grid_columnconfigure(1, weight=1)
 canvas = tk.Canvas(canvas_frame, height=canvas_height, bg="white")
 canvas.grid(row=1, column=1, sticky="nsew")
 
+cell_selection = tk.Entry(root,
+                          width=12,
+                          highlightthickness=1,
+                          highlightbackground='gray')
+cell_selection.configure(font=("Arial", 28))
+cell_selection.insert(0, "=a1+b2")
+cell_selection_id = canvas.create_window(cell_width*2, cell_height*2, window=cell_selection)
+
+canvas.coords(cell_selection_id, 0, 0)
+
 def scroll_x(*args):
     print(args)
 
