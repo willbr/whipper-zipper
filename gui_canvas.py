@@ -10,11 +10,16 @@ root.update_idletasks()
 num_rows = 30
 num_cols = 5
 
+font_spec = ('Arial', 22)
+
 canvas_height = root.winfo_height()
 
 # Calculate the width and height of each cell
 cell_width = 150
 cell_height = 50
+
+first_cell_x = cell_width // 2
+first_cell_y = cell_height
 
 entry_frame = tk.Frame(root)
 entry_frame.pack(pady=5, fill='x', expand=True)
@@ -25,7 +30,7 @@ cell_name = tk.Entry(
         highlightthickness=1,
         highlightbackground="gray")
 cell_name.pack(side='left', padx=(0,5))
-cell_name.configure(font=("Arial", 28))
+cell_name.configure(font=font_spec)
 cell_name.insert(0, "name")
 
 entry = tk.Entry(
@@ -33,7 +38,7 @@ entry = tk.Entry(
         highlightthickness=1,
         highlightbackground="gray")
 entry.pack(side='right', fill='both', expand=True, padx=(5,5))
-entry.configure(font=("Arial", 28))
+entry.configure(font=font_spec)
 entry.insert(0, "formula")
 entry.focus()
 
@@ -47,20 +52,23 @@ canvas = tk.Canvas(canvas_frame, height=canvas_height, bg="white")
 canvas.grid(row=1, column=1, sticky="nsew")
 
 cell_selection = tk.Entry(root,
-                          width=12,
                           highlightthickness=1,
                           highlightbackground='gray')
-cell_selection.configure(font=("Arial", 28))
+cell_selection.configure(font=font_spec)
 cell_selection.insert(0, "=a1+b2")
-cell_selection_id = canvas.create_window(cell_width*2, cell_height*2, window=cell_selection)
+cell_selection_id = canvas.create_window(cell_width*2, cell_height*2, window=cell_selection, width=cell_width, height=cell_height)
 
-canvas.coords(cell_selection_id, 0, 0)
+canvas.coords(cell_selection_id,
+              first_cell_x + cell_width  // 2,
+              first_cell_y + cell_height // 2)
 
 def scroll_x(*args):
-    print(args)
+    #print(args)
+    pass
 
 def scroll_y(*args):
-    print(args)
+    #print(args)
+    pass
 
 # Create a horizontal scrollbar
 scrollbar_x = tk.Scrollbar(canvas_frame, orient="horizontal", command=scroll_x)
@@ -78,15 +86,16 @@ canvas.configure(
 
 def render_grid(event=None):
 # Draw the row numbers
-    x = cell_height / 1
-    for col in range(num_cols):
-        x += cell_width  # Start from the second column
-        canvas.create_text(x + cell_width // 2, cell_height // 2, text=chr(65 + col), anchor="center")
 
-    y = cell_height / 1
+    x = first_cell_x
+    for col in range(num_cols):
+        canvas.create_text(x + cell_width // 2, cell_height // 2, text=chr(65 + col), anchor="center", font=font_spec)
+        x += cell_width  # Start from the second column
+
+    y = cell_height // 1
     for row in range(num_rows):
         y = (row + 1) * cell_height  # Start from the second row
-        canvas.create_text(cell_width // 4, y + cell_height // 2, text=str(row + 1), anchor="center")
+        canvas.create_text(cell_width // 4, y + cell_height // 2, text=str(row + 1), anchor="center", font=font_spec)
 
     canvas_width  = root.winfo_width()
     canvas_height  = root.winfo_height()
@@ -95,13 +104,12 @@ def render_grid(event=None):
     y = 0
     for row in range(1, num_rows + 2):
         y += cell_height
-        canvas.create_line(cell_width, y, canvas_width, y, fill="gray")
+        canvas.create_line(0, y, canvas_width, y, fill="gray")
 
-    x = 0
+    x = cell_width // 2
     for col in range(1, num_cols + 2):
+        canvas.create_line(x, 0, x, canvas_height, fill="gray")
         x += cell_width
-        print((x, cell_height, canvas_height))
-        canvas.create_line(x, cell_height, x, canvas_height, fill="gray")
 
 # Bind the scrollable area to the mouse wheel
 canvas.bind("<Configure>", render_grid)
