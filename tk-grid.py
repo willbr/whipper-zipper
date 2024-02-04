@@ -5,8 +5,8 @@ from tkinter import font
 from dataclasses import dataclass
 from typing import Any
 
-number_of_rows    = 20
-number_of_columns = 7
+number_of_rows    = 40
+number_of_columns = 12
 
 window = tk.Tk()
 window.title('Grid Test')
@@ -228,11 +228,19 @@ if r != er:
     assert False
 
 def resolve_refs(s):
-    matched = re.sub(r"(?<!')([a-c]\d+)", r"cell_ref('\1')", s)
+    matched = re.sub(r"(?<!')([a-z]+\d+)", r"cell_ref('\1')", s)
     return matched
 
 i  = "sum(cell_range_ref('a1', 'b2'))"
 er = "sum(cell_range_ref('a1', 'b2'))"
+r  = resolve_refs(i)
+
+if r != er:
+    print(f'{i=}, {er=}, {r=}')
+    assert False
+
+i  = "f16"
+er = "cell_ref('f16')"
 r  = resolve_refs(i)
 
 if r != er:
@@ -315,7 +323,7 @@ def on_leave(event):
     failed = True
     expr = resolve_expr(raw_expr)
 
-    #print(expr)
+    print(expr)
     new_value = eval(expr)
     widget.value = new_value
 
