@@ -115,6 +115,11 @@ def render_grid(event=None):
 canvas.bind("<Configure>", render_grid)
 #canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
 
+def escape(event):
+    print(event)
+    canvas.itemconfig(cell_selection_id, state=tk.HIDDEN)
+
+root.bind('<Escape>', escape)
 
 root.mainloop()
 
