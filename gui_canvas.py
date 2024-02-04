@@ -29,18 +29,20 @@ cell_name = tk.Entry(
         width=12,
         highlightthickness=1,
         highlightbackground="gray")
-cell_name.pack(side='left', padx=(0,5))
+cell_name.pack(side='left', padx=(10,5))
 cell_name.configure(font=font_spec)
-cell_name.insert(0, "name")
+cell_name.insert(0, "a1")
+
+entry_text = tk.StringVar()
 
 entry = tk.Entry(
         entry_frame,
+        textvariable=entry_text,
         highlightthickness=1,
         highlightbackground="gray")
-entry.pack(side='right', fill='both', expand=True, padx=(5,5))
+entry.pack(side='right', fill='both', expand=True, padx=(5,10))
 entry.configure(font=font_spec)
-entry.insert(0, "formula")
-entry.focus()
+entry.insert(0, "=a1+b2")
 
 # Create a scrollable canvas
 canvas_frame = tk.Frame(root)
@@ -51,16 +53,36 @@ canvas_frame.grid_columnconfigure(1, weight=1)
 canvas = tk.Canvas(canvas_frame, height=canvas_height, bg="white")
 canvas.grid(row=1, column=1, sticky="nsew")
 
+cell_selection_text = tk.StringVar()
 cell_selection = tk.Entry(root,
+                          textvariable=cell_selection_text,
                           highlightthickness=1,
                           highlightbackground='gray')
 cell_selection.configure(font=font_spec)
 cell_selection.insert(0, "=a1+b2")
+cell_selection.focus()
 cell_selection_id = canvas.create_window(cell_width*2, cell_height*2, window=cell_selection, width=cell_width, height=cell_height)
 
 canvas.coords(cell_selection_id,
               first_cell_x + cell_width  // 2,
               first_cell_y + cell_height // 2)
+
+
+
+def mirror_text(event):
+    if event.widget == entry:
+        #print(f'entry: {event}')
+        cell_selection_text.set(entry_text.get())
+    elif event.widget == cell_selection:
+        #print(f'cell: {event}')
+        entry_text.set(cell_selection_text.get())
+    else:
+        print(f'else: {event}')
+
+
+entry.bind('<KeyRelease>', mirror_text)
+cell_selection.bind('<KeyRelease>', mirror_text)
+
 
 def scroll_x(*args):
     #print(args)
@@ -116,8 +138,9 @@ canvas.bind("<Configure>", render_grid)
 #canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
 
 def escape(event):
-    print(event)
+    #print(event)
     canvas.itemconfig(cell_selection_id, state=tk.HIDDEN)
+    root.focus_set()
 
 root.bind('<Escape>', escape)
 
