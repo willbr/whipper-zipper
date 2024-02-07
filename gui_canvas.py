@@ -22,7 +22,7 @@ first_cell_x = cell_width // 2
 first_cell_y = cell_height
 
 entry_frame = tk.Frame(root)
-entry_frame.pack(pady=5, fill='x', expand=True)
+entry_frame.pack(pady=5, fill='x', expand=False)
 
 cell_name = tk.Entry(
         entry_frame,
