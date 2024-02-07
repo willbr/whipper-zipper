@@ -3,6 +3,7 @@ import tkinter as tk
 root = tk.Tk()
 root.title("Spreadsheet")
 root.geometry("1080x1080")
+root.minsize(400,220)
 
 root.update_idletasks()
 
