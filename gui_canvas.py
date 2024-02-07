@@ -28,14 +28,18 @@ first_cell_y = col_header_height
 entry_frame = tk.Frame(root)
 entry_frame.pack(pady=5, fill='x', expand=False)
 
+cell_name_text = tk.StringVar()
+
 cell_name = tk.Entry(
         entry_frame,
         width=12,
+        textvariable=cell_name_text,
         highlightthickness=1,
         highlightbackground="gray")
 cell_name.pack(side='left', padx=(10,5))
 cell_name.configure(font=font_spec)
-cell_name.insert(0, "a1")
+
+cell_name_text.set('a1')
 
 entry_text = tk.StringVar()
 
@@ -115,7 +119,7 @@ def render_grid(event=None):
 
     x = first_cell_x
     for col in range(num_cols):
-        canvas.create_text(x + cell_width // 2, cell_height // 2, text=chr(65 + col), anchor="center", font=font_spec)
+        canvas.create_text(x + cell_width // 2, cell_height // 2, text=chr(97 + col), anchor="center", font=font_spec)
         x += cell_width  # Start from the second column
 
     y = cell_height // 1
@@ -140,20 +144,33 @@ def render_grid(event=None):
 
 def click_canvas(event):
     #print(event)
-    row = ((event.y + col_header_height) // cell_height) - 1
-    col = (event.x + row_header_width) // cell_width
-    #print((row,col))
+    row = ((event.y + col_header_height) // cell_height) - 2
+    col = ((event.x + row_header_width) // cell_width) - 1
+    print((row,col))
 
-    col_name = chr(65 + col - 1)
+    col_name = chr(97 + col)
 
-    if (row, col) == (0, 0):
+    if (row, col) == (-1, -1):
         print('#')
-    elif row == 0:
+        return
+    elif row == -1:
         print(f'{col_name}:{col_name}')
-    elif col == 0:
-        print(f'{row}:{row}')
-    else:
-        print(f'{col_name}{row}')
+        return
+    elif col == -1:
+        print(f'{row+1}:{row+1}')
+        return
+
+    name = f'{col_name}{row+1}'
+    print(name)
+
+    cell_name_text.set(name)
+
+    cell_x = row_header_width  + (cell_width  * col)
+    cell_y = col_header_height + (cell_height * row)
+    canvas.coords(cell_selection_id,
+                  cell_x + cell_width // 2,
+                  cell_y + cell_height // 2)
+
 
 
 # Bind the scrollable area to the mouse wheel
