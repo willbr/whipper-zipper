@@ -19,8 +19,11 @@ canvas_height = root.winfo_height()
 cell_width = 150
 cell_height = 50
 
-first_cell_x = cell_width // 2
-first_cell_y = cell_height
+col_header_height = cell_height
+row_header_width  = cell_width // 2
+
+first_cell_x = row_header_width
+first_cell_y = col_header_height
 
 entry_frame = tk.Frame(root)
 entry_frame.pack(pady=5, fill='x', expand=False)
@@ -134,8 +137,28 @@ def render_grid(event=None):
         canvas.create_line(x, 0, x, canvas_height, fill="gray")
         x += cell_width
 
+
+def click_canvas(event):
+    #print(event)
+    row = ((event.y + col_header_height) // cell_height) - 1
+    col = (event.x + row_header_width) // cell_width
+    #print((row,col))
+
+    col_name = chr(65 + col - 1)
+
+    if (row, col) == (0, 0):
+        print('#')
+    elif row == 0:
+        print(f'{col_name}:{col_name}')
+    elif col == 0:
+        print(f'{row}:{row}')
+    else:
+        print(f'{col_name}{row}')
+
+
 # Bind the scrollable area to the mouse wheel
 canvas.bind("<Configure>", render_grid)
+canvas.bind("<Button-1>", click_canvas)
 #canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
 
 def escape(event):
