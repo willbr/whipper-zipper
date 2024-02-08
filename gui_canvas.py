@@ -9,10 +9,11 @@ root.minsize(400,220)
 root.update_idletasks()
 
 # Define the number of rows and columns in the spreadsheet
-num_rows = 30
+num_rows = 15
 num_cols = 5
 
 worksheet = Worksheet()
+cells = None
 
 font_spec = ('Arial', 22)
 
@@ -149,8 +150,11 @@ def render_grid(from_row, from_col):
 
 
 def render_values():
-    cells = worksheet.render_cells(0, 0, 20, 20)
+    global cells
+    cells = []
+    new_cells = worksheet.render_cells(0, 0, 20, 20)
     for row in range(num_rows):
+        row_cells = []
         for col in range(num_cols):
             #value = cells[col, row]
 
@@ -161,11 +165,17 @@ def render_values():
             cell_y += cell_height // 2
 
             text = f'r{row+1}c{col+1}'
-            canvas.create_text(
+            cell_id = canvas.create_text(
                     cell_x, cell_y,
                     text=text,
                     anchor="w",
                     font=font_spec)
+            row_cells.append(cell_id)
+        cells.append(row_cells)
+
+    print(cells)
+
+    canvas.itemconfig(cell_id, text='hello')
 
 
 def render_worksheet(event=None):
