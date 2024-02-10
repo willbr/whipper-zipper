@@ -22,8 +22,10 @@ def a1_ref_to_rc(address):
 
     assert len(col_name) == 1
 
-    col = 97 - ord(col_name)
+    col = ord(col_name) - 97
     row = int(row_name) - 1
+
+    #print(f'{address} -> {col_name},{row_name} -> {row},{col}')
 
     return (row, col)
 
