@@ -38,7 +38,7 @@ num_cols = 5
 worksheet = Worksheet()
 cells = None
 
-font_spec = ('Arial', 22)
+font_spec = ('Consolas', 22)
 selection_colour = '#C1F2FA'
 
 selected_cell_row = 0
@@ -396,6 +396,14 @@ def move_cursor(event):
             x, y = 0, -1
         elif event.keysym == 'l':
             x, y = 1, 0
+        elif event.keysym == 'Up':
+            x, y = 0, -1
+        elif event.keysym == 'Down':
+            x, y = 0, 1
+        elif event.keysym == 'Left':
+            x, y = -1, 0
+        elif event.keysym == 'Right':
+            x, y = 1, 0
         elif event.keysym == 'Tab':
             x, y = 1, 0
         elif event.keysym == 'Return':
@@ -436,14 +444,23 @@ root.bind('<Escape>', escape)
 
 root.bind('<Return>', move_cursor)
 root.bind('<Tab>', move_cursor)
+
 root.bind('h', move_cursor)
 root.bind('j', move_cursor)
 root.bind('k', move_cursor)
 root.bind('l', move_cursor)
+
+root.bind('<Up>',    move_cursor)
+root.bind('<Down>',  move_cursor)
+root.bind('<Left>',  move_cursor)
+root.bind('<Right>', move_cursor)
+
 root.bind('i', edit_cursor)
 
 
-select_cell(0, 0)
+
+select_cell(0, 1)
+edit_cell(0, 1)
 #set_formula(0, 0, '1')
 set_formula(1, 1, '2')
 set_formula(1, 0, 'b2')
