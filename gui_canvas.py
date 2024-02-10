@@ -1,6 +1,29 @@
 import tkinter as tk
 from spreadsheet import Worksheet
 
+# TODO
+# scrolling
+# filters
+# cut, copy and paste
+# cell formating
+# zoom
+
+# select range with the mouse
+# o insert row below
+# O insert row above
+
+# Ctrl+Space select column
+# Shift+Space select row
+
+# ctrl+arrow to jump to next data
+
+# cell formatting
+# ctrl+f find
+
+# ctrl+n new workbook
+# ctrl+o open workbook
+# ctrl+s save workbook
+
 root = tk.Tk()
 root.title("Spreadsheet")
 root.geometry("1080x1080")
