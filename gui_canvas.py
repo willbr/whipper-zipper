@@ -55,14 +55,14 @@ cell_name_text.set('')
 
 formula_text = tk.StringVar()
 
-formula = tk.Entry(
+formula_entry = tk.Entry(
         entry_frame,
         textvariable=formula_text,
         highlightthickness=1,
         highlightbackground="gray")
-formula.pack(side='right', fill='both', expand=True, padx=(5,10))
-formula.configure(font=font_spec)
-formula.insert(0, '')
+formula_entry.pack(side='right', fill='both', expand=True, padx=(5,10))
+formula_entry.configure(font=font_spec)
+formula_entry.insert(0, '')
 
 # Create a scrollable canvas
 canvas_frame = tk.Frame(root)
@@ -101,7 +101,7 @@ cell_selection_id = canvas.create_rectangle(
 
 
 def mirror_text(event):
-    if event.widget == formula:
+    if event.widget == formula_entry:
         #print(f'formula: {event}')
         cell_formula_text.set(formula_text.get())
     elif event.widget == cell_formula:
@@ -114,6 +114,8 @@ def mirror_text(event):
 
 
 def formula_on_enter(event):
+    formula =  formula_text.get()
+    set_formula(selected_cell_row, selected_cell_col, formula)
     shift_pressed = event.state & shift_mask
     offset = -1 if shift_pressed else 1
     edit_cell(selected_cell_row + offset, selected_cell_col)
@@ -127,13 +129,13 @@ def formula_on_tab(event):
     return "break"
 
 
-formula.bind('<Return>', formula_on_enter)
+formula_entry.bind('<Return>', formula_on_enter)
 cell_formula.bind('<Return>', formula_on_enter)
 
-formula.bind('<Tab>', formula_on_tab)
+formula_entry.bind('<Tab>', formula_on_tab)
 cell_formula.bind('<Tab>', formula_on_tab)
 
-formula.bind('<KeyRelease>', mirror_text)
+formula_entry.bind('<KeyRelease>', mirror_text)
 cell_formula.bind('<KeyRelease>', mirror_text)
 
 
@@ -200,7 +202,7 @@ def render_values():
             cell_x += cell_width  // 32
             cell_y += cell_height // 2
 
-            text = f'r{row+1}c{col+1}'
+            text = worksheet.get_value(row, col)
             text = new_cells[row][col]
 
             cell_id = canvas.create_text(
@@ -213,6 +215,14 @@ def render_values():
 
     #cell_id = cells[4][4]
     #canvas.itemconfig(cell_id, text='hello')
+
+
+def set_formula(row, col, formula):
+    changes = worksheet.set_formula(row, col, formula)
+    for change in changes:
+        (row, col), new_value = change
+        cell_id = cells[row][col]
+        canvas.itemconfig(cell_id, text=new_value)
 
 
 def render_worksheet(event=None):
@@ -265,7 +275,8 @@ def edit_cell(row, col):
 
 
     cell_name_text.set(f'{col_name}{row_name}')
-    cell_formula_text.set(f'{col_name}{row_name}')
+    formula = worksheet.get_formula(row, col)
+    cell_formula_text.set(formula)
 
     cell_formula.select_range(0, tk.END)
     cell_formula.icursor(tk.END)
@@ -310,10 +321,11 @@ def select_cell(row, col):
     name = f'{col_name}{row+1}'
     #print(name)
 
+    formula = worksheet.get_formula(row, col)
     cell_name_text.set(name)
-    formula_text.set(f'cell formula: {name}')
+    formula_text.set(formula)
 
-    formula.icursor(tk.END)
+    formula_entry.icursor(tk.END)
 
     root.focus()
 
