@@ -116,13 +116,25 @@ def mirror_text(event):
 def formula_on_enter(event):
     formula =  formula_text.get()
     set_formula(selected_cell_row, selected_cell_col, formula)
+    select_cell(selected_cell_row, selected_cell_col)
+    return "break"
+
+
+def formula_on_tab(event):
+    root.focus()
+    return "break"
+
+def cell_formula_on_enter(event):
+    formula =  formula_text.get()
+    set_formula(selected_cell_row, selected_cell_col, formula)
     shift_pressed = event.state & shift_mask
     offset = -1 if shift_pressed else 1
     edit_cell(selected_cell_row + offset, selected_cell_col)
     return "break"
 
-
-def formula_on_tab(event):
+def cell_formula_on_tab(event):
+    formula =  formula_text.get()
+    set_formula(selected_cell_row, selected_cell_col, formula)
     shift_pressed = event.state & shift_mask
     offset = -1 if shift_pressed else 1
     edit_cell(selected_cell_row, selected_cell_col + offset)
@@ -130,10 +142,10 @@ def formula_on_tab(event):
 
 
 formula_entry.bind('<Return>', formula_on_enter)
-cell_formula.bind('<Return>', formula_on_enter)
+cell_formula.bind('<Return>', cell_formula_on_enter)
 
 formula_entry.bind('<Tab>', formula_on_tab)
-cell_formula.bind('<Tab>', formula_on_tab)
+cell_formula.bind('<Tab>', cell_formula_on_tab)
 
 formula_entry.bind('<KeyRelease>', mirror_text)
 cell_formula.bind('<KeyRelease>', mirror_text)
@@ -219,6 +231,7 @@ def render_values():
 
 def set_formula(row, col, formula):
     changes = worksheet.set_formula(row, col, formula)
+    #print(changes)
     for change in changes:
         (row, col), new_value = change
         cell_id = cells[row][col]
@@ -382,9 +395,10 @@ def edit_cursor(event):
         return
     edit_cell(selected_cell_row, selected_cell_col)
 
+render_worksheet()
 
 # Bind the scrollable area to the mouse wheel
-canvas.bind("<Configure>", render_worksheet)
+#canvas.bind("<Configure>", render_worksheet)
 canvas.bind("<Button-1>", click_canvas)
 canvas.bind("<Double-1>", double_click_canvas)
 #canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
@@ -407,6 +421,12 @@ root.bind('i', edit_cursor)
 
 
 select_cell(0, 0)
+#set_formula(0, 0, '1')
+set_formula(1, 1, '2')
+set_formula(1, 0, 'b2')
+#set_formula(2, 0, 'a2')
+#set_formula(3, 0, 'sum(a1:a3)')
+#exit()
 
 root.mainloop()
 
