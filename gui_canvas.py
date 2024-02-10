@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from spreadsheet import Worksheet
 
 # TODO
@@ -38,8 +39,11 @@ num_cols = 5
 worksheet = Worksheet()
 cells = None
 
+style = ttk.Style()
+style.lookup('TEntry', 'background')
+
 font_spec = ('Consolas', 22)
-selection_colour = '#C1F2FA'
+selection_colour = style.lookup('TEntry', 'background')
 
 selected_cell_row = 0
 selected_cell_col = 0
@@ -60,7 +64,7 @@ row_header_width  = cell_width // 2
 first_cell_x = row_header_width
 first_cell_y = col_header_height
 
-entry_frame = tk.Frame(root)
+entry_frame = ttk.Frame(root)
 entry_frame.pack(pady=5, fill='x', expand=False)
 
 cell_name_text = tk.StringVar()
@@ -93,7 +97,7 @@ canvas_frame.pack(fill='both', expand=True)
 canvas_frame.grid_rowconfigure(1, weight=1)
 canvas_frame.grid_columnconfigure(1, weight=1)
 
-canvas = tk.Canvas(canvas_frame, height=canvas_height, bg="white")
+canvas = tk.Canvas(canvas_frame, height=canvas_height)
 canvas.grid(row=1, column=1, sticky="nsew")
 
 cell_formula_text = tk.StringVar()
