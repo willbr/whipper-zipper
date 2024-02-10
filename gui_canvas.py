@@ -16,6 +16,14 @@ worksheet = Worksheet()
 cells = None
 
 font_spec = ('Arial', 22)
+selection_colour = '#C1F2FA'
+
+selected_cell_row = 0
+selected_cell_col = 0
+
+shift_mask = 0x0001
+ctrl_mask  = 0x0004
+alt_mask   = 0x0008
 
 canvas_height = root.winfo_height()
 
@@ -43,18 +51,18 @@ cell_name = tk.Entry(
 cell_name.pack(side='left', padx=(10,5))
 cell_name.configure(font=font_spec)
 
-cell_name_text.set('a1')
+cell_name_text.set('')
 
-entry_text = tk.StringVar()
+formula_text = tk.StringVar()
 
-entry = tk.Entry(
+formula = tk.Entry(
         entry_frame,
-        textvariable=entry_text,
+        textvariable=formula_text,
         highlightthickness=1,
         highlightbackground="gray")
-entry.pack(side='right', fill='both', expand=True, padx=(5,10))
-entry.configure(font=font_spec)
-entry.insert(0, "=a1+b2")
+formula.pack(side='right', fill='both', expand=True, padx=(5,10))
+formula.configure(font=font_spec)
+formula.insert(0, '')
 
 # Create a scrollable canvas
 canvas_frame = tk.Frame(root)
@@ -65,40 +73,68 @@ canvas_frame.grid_columnconfigure(1, weight=1)
 canvas = tk.Canvas(canvas_frame, height=canvas_height, bg="white")
 canvas.grid(row=1, column=1, sticky="nsew")
 
-cell_selection_text = tk.StringVar()
-cell_selection = tk.Entry(root,
-                          textvariable=cell_selection_text,
+cell_formula_text = tk.StringVar()
+cell_formula = tk.Entry(root,
+                          textvariable=cell_formula_text,
                           highlightthickness=1,
                           highlightbackground='gray')
-cell_selection.configure(font=font_spec)
-cell_selection.insert(0, "=a1+b2")
-cell_selection.focus()
-cell_selection_id = canvas.create_window(
+cell_formula.configure(font=font_spec)
+cell_formula.insert(0, '')
+cell_formula.focus()
+cell_formula_id = canvas.create_window(
         cell_width*2, cell_height*2,
-        window=cell_selection,
+        window=cell_formula,
         width=cell_width,
         height=cell_height,
         state=tk.HIDDEN)
 
-canvas.coords(cell_selection_id,
+canvas.coords(cell_formula_id,
               first_cell_x + cell_width  // 2,
               first_cell_y + cell_height // 2)
 
 
+cell_selection_id = canvas.create_rectangle(
+        50, 100, 250, 200,
+        fill=selection_colour,
+        tags=('selection',),
+        state=tk.HIDDEN)
+
 
 def mirror_text(event):
-    if event.widget == entry:
-        #print(f'entry: {event}')
-        cell_selection_text.set(entry_text.get())
-    elif event.widget == cell_selection:
+    if event.widget == formula:
+        #print(f'formula: {event}')
+        cell_formula_text.set(formula_text.get())
+    elif event.widget == cell_formula:
         #print(f'cell: {event}')
-        entry_text.set(cell_selection_text.get())
+        formula_text.set(cell_formula_text.get())
     else:
         print(f'else: {event}')
 
+    return 'break'
 
-entry.bind('<KeyRelease>', mirror_text)
-cell_selection.bind('<KeyRelease>', mirror_text)
+
+def formula_on_enter(event):
+    shift_pressed = event.state & shift_mask
+    offset = -1 if shift_pressed else 1
+    edit_cell(selected_cell_row + offset, selected_cell_col)
+    return "break"
+
+
+def formula_on_tab(event):
+    shift_pressed = event.state & shift_mask
+    offset = -1 if shift_pressed else 1
+    edit_cell(selected_cell_row, selected_cell_col + offset)
+    return "break"
+
+
+formula.bind('<Return>', formula_on_enter)
+cell_formula.bind('<Return>', formula_on_enter)
+
+formula.bind('<Tab>', formula_on_tab)
+cell_formula.bind('<Tab>', formula_on_tab)
+
+formula.bind('<KeyRelease>', mirror_text)
+cell_formula.bind('<KeyRelease>', mirror_text)
 
 
 def scroll_x(*args):
@@ -175,8 +211,8 @@ def render_values():
             row_cells.append(cell_id)
         cells.append(row_cells)
 
-    cell_id = cells[4][4]
-    canvas.itemconfig(cell_id, text='hello')
+    #cell_id = cells[4][4]
+    #canvas.itemconfig(cell_id, text='hello')
 
 
 def render_worksheet(event=None):
@@ -200,6 +236,64 @@ def click_canvas(event):
     row, col = cell_index(event)
     #print((row,col))
 
+    select_cell(row, col)
+
+
+def double_click_canvas(event):
+    row, col = cell_index(event)
+    edit_cell(row, col)
+
+
+def edit_cell(row, col):
+    global selected_cell_row
+    global selected_cell_col
+
+    row = max(0, min(row, num_rows - 1))
+    col = max(0, min(col, num_cols - 1))
+
+    selected_cell_row = row
+    selected_cell_col = col
+
+    col_name, row_name = cell_name_a1_style(row, col)
+
+    #print((row,col))
+    cell_x = row_header_width  + (cell_width  * col)
+    cell_y = col_header_height + (cell_height * row)
+    canvas.coords(cell_formula_id,
+                  cell_x + cell_width // 2,
+                  cell_y + cell_height // 2)
+
+
+    cell_name_text.set(f'{col_name}{row_name}')
+    cell_formula_text.set(f'{col_name}{row_name}')
+
+    cell_formula.select_range(0, tk.END)
+    cell_formula.icursor(tk.END)
+
+    canvas.itemconfig(cell_selection_id, state=tk.HIDDEN)
+    canvas.itemconfig(cell_formula_id, state=tk.NORMAL)
+    cell_formula.focus()
+
+
+def select_cell(row, col):
+    global selected_cell_row
+    global selected_cell_col
+
+    row = max(0, min(row, num_rows - 1))
+    col = max(0, min(col, num_cols - 1))
+
+    canvas.itemconfig(cell_formula_id, state=tk.HIDDEN)
+
+    selected_cell_row = row
+    selected_cell_col = col
+
+    cell_x = row_header_width  + (cell_width  * col)
+    cell_y = col_header_height + (cell_height * row)
+    canvas.coords(cell_selection_id,
+                  cell_x, cell_y,
+                  cell_x + cell_width, cell_y + cell_height)
+    canvas.itemconfig(cell_selection_id, state=tk.NORMAL)
+
     col_name, row_name = cell_name_a1_style(row, col)
 
 
@@ -217,30 +311,64 @@ def click_canvas(event):
     #print(name)
 
     cell_name_text.set(name)
-    entry_text.set(f'cell formula: {name}')
+    formula_text.set(f'cell formula: {name}')
 
-    entry.focus()
-    entry.icursor(tk.END)
+    formula.icursor(tk.END)
 
-    canvas.itemconfig(cell_selection_id, state=tk.HIDDEN)
+    root.focus()
 
 
-def double_click_canvas(event):
-    row, col = cell_index(event)
-    col_name, row_name = cell_name_a1_style(row, col)
+def move_cursor(event):
+    if event.widget != root:
+        return
 
-    #print((row,col))
-    cell_x = row_header_width  + (cell_width  * col)
-    cell_y = col_header_height + (cell_height * row)
-    canvas.coords(cell_selection_id,
-                  cell_x + cell_width // 2,
-                  cell_y + cell_height // 2)
+    shift_pressed = event.state & shift_mask
+    ctrl_pressed  = event.state & ctrl_mask
+    alt_pressed   = event.state & alt_mask
 
-    cell_selection_text.set(f'{col_name}{row_name}')
-    cell_selection.select_range(0, tk.END)
-    cell_selection.icursor(tk.END)
-    canvas.itemconfig(cell_selection_id, state=tk.NORMAL)
-    cell_selection.focus()
+    #print(event)
+
+    if shift_pressed:
+        if event.keysym == 'Tab':
+            x, y = -1, 0
+        elif event.keysym == 'Return':
+            x, y = 0, -1
+        else:
+            return "break"
+    elif ctrl_pressed:
+        return "break"
+    elif alt_pressed:
+        return "break"
+    else:
+        if event.keysym == 'h':
+            x, y = -1, 0
+        elif event.keysym == 'j':
+            x, y = 0, 1
+        elif event.keysym == 'k':
+            x, y = 0, -1
+        elif event.keysym == 'l':
+            x, y = 1, 0
+        elif event.keysym == 'Tab':
+            x, y = 1, 0
+        elif event.keysym == 'Return':
+            x, y = 0, 1
+        else:
+            return "break"
+
+    row, col = selected_cell_row, selected_cell_col
+
+    row += y
+    col += x
+
+    select_cell(row, col)
+
+    return "break"
+
+
+def edit_cursor(event):
+    if event.widget != root:
+        return
+    edit_cell(selected_cell_row, selected_cell_col)
 
 
 # Bind the scrollable area to the mouse wheel
@@ -251,10 +379,22 @@ canvas.bind("<Double-1>", double_click_canvas)
 
 def escape(event):
     #print(event)
-    canvas.itemconfig(cell_selection_id, state=tk.HIDDEN)
+    #canvas.itemconfig(cell_formula_id, state=tk.HIDDEN)
+    select_cell(selected_cell_row, selected_cell_col)
     root.focus_set()
 
 root.bind('<Escape>', escape)
+
+root.bind('<Return>', move_cursor)
+root.bind('<Tab>', move_cursor)
+root.bind('h', move_cursor)
+root.bind('j', move_cursor)
+root.bind('k', move_cursor)
+root.bind('l', move_cursor)
+root.bind('i', edit_cursor)
+
+
+select_cell(0, 0)
 
 root.mainloop()
 

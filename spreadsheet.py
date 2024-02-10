@@ -15,7 +15,9 @@ class Worksheet():
             x = x_offset
             for j in range(w):
                 c = chr(97 + x)
-                row_cells.append(f'{c}{y+1}')
+                value = f'{c}{y+1}'
+                value = ''
+                row_cells.append(value)
                 x += 1
             cells.append(row_cells)
             y += 1
