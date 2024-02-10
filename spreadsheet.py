@@ -30,15 +30,38 @@ def a1_ref_to_rc(address):
     return (row, col)
 
 
+def rc_to_a1_ref(row, col):
+    col_name = chr(97 + col)
+    row_name = row + 1
+    name = f'{col_name}{row_name}'
+    return name
+
+
+def range_to_addresses(a1_from_address, a1_to_address):
+    from_r, from_c = a1_ref_to_rc(a1_from_address)
+    to_r,   to_c = a1_ref_to_rc(a1_to_address)
+
+    if from_r > to_r:
+        from_r, to_r = to_r, from_r
+
+    if from_c > to_c:
+        from_c, to_c = to_c, from_c
+
+    for col in range(from_c, to_c + 1):
+        for row in range(from_r, to_r + 1):
+            yield (row, col)
+
+
 class Worksheet():
     def __init__(self, min_rows=5, min_cols=20):
         self.name = "Sheet1"
         self.cell_values   = {}
         self.cell_formulas = {}
-        self.cell_dependents = set()
-        self.cell_precedents = set()
+        self.cell_dependents = {}
+        self.cell_precedents = {}
 
         self.cell_transformer = CellReferenceTransformer(self)
+
         self.eval_context = {
                 'cell_reference': self.cell_reference,
                 'range_reference': self.range_reference,
@@ -60,16 +83,29 @@ class Worksheet():
         return cells
 
 
-    def set_formula(self, row, col, new_formula):
+    def set_formula(self, row, col, new_formula=None):
         address = (row, col)
-        #print(f'{address}, {new_formula}')
+        #print(f'set {address=}, {new_formula=}')
 
-        self.cell_formulas[address] = new_formula
+        old_value = self.cell_values.get(address, None)
+        new_value = self.eval_formula(row, col, new_formula)
 
-        new_value = self.eval_formula(row, col)
+        if new_value is None:
+            changes = [(address, '')]
+        else:
+            changes = [(address, repr(new_value))]
 
-        changes = []
-        changes.append((address, new_value))
+        if new_value != old_value:
+            #print(f'dirty {new_value=} != {old_value=}')
+            self.cell_values[address] = new_value
+
+            precedents = self.cell_precedents.get(address, set())
+            #print(f'{precedents=}')
+
+            for precedent in precedents:
+                precedent_changes = self.set_formula(*precedent, new_formula=None)
+                changes.extend(precedent_changes)
+
         return changes
 
 
@@ -79,25 +115,41 @@ class Worksheet():
 
 
     def get_value(self, row, col):
-        value = self.cell_values.get((row, col), '')
+        value = self.cell_values.get((row, col), None)
         return value
 
 
-    def eval_formula(self, row, col):
+    def eval_formula(self, row, col, formula=None):
         address = (row, col)
-        formula = self.cell_formulas.get(address, '')
+
+        if formula is None:
+            formula = self.cell_formulas.get(address, '')
+        else:
+            self.cell_formulas[address] = formula
+
+        #print(f'eval {address} {formula}')
+
+        if formula.strip() == '':
+            return None
 
         py_formula = formula
         py_formula = re.sub(r'(\w+):(\w+)', r"range_reference('\1', '\2')", py_formula)
         py_formula = re.sub(r"(?<!')([a-z]+\d+)", r"cell_reference('\1')", py_formula)
-        print(py_formula)
+        #print(py_formula)
 
-        raw_formula_ast = ast.parse(py_formula, mode='eval')
+        filename = rc_to_a1_ref(row, col)
+        try:
+            raw_formula_ast = ast.parse(py_formula, filename=filename, mode='eval')
+        except Exception as e:
+            result = f'#Error {e} {formula=}'
+            return result
         #print(ast.dump(raw_formula_ast, indent=4))
 
         new_formula_ast = raw_formula_ast
         #new_formula_ast = self.cell_transformer.visit(raw_formula_ast)
         #print(ast.dump(new_formula_ast, indent=4))
+
+        self.parse_dependents(address, new_formula_ast)
 
         compiled_code = compile(new_formula_ast, filename='<ast>', mode='eval')
         #print(compiled_code)
@@ -106,13 +158,11 @@ class Worksheet():
 
         try:
             result = eval(compiled_code, self.eval_context, None)
-            #result = eval(expression, None, None) 
+            #result = eval(py_formula, self.eval_context, None)
         except Exception as e:
             result = f'#Error {e}'
 
-        self.cell_values[address] = result
-
-        return repr(result)
+        return result
 
 
     def cell_reference(self, a1_address):
@@ -121,20 +171,47 @@ class Worksheet():
         return value
 
 
-    def range_reference(self, from_address, to_address):
-        from_r, from_c = a1_ref_to_rc(from_address)
-        to_r,   to_c = a1_ref_to_rc(to_address)
-
-        if from_r > to_r:
-            from_r, to_r = to_r, from_r
-
-        if from_c > to_c:
-            from_c, to_c = to_c, from_c
-
-        for col in range(from_c, to_c + 1):
-            for row in range(from_r, to_r + 1):
-                value = self.get_value(row, col)
+    def range_reference(self, a1_from_address, a1_to_address):
+        for address in range_to_addresses(a1_from_address, a1_to_address):
+            value = self.get_value(*address)
+            if value is not None:
                 yield value
+
+
+    def parse_dependents(self, address, formula_ast):
+        #print(f'{address=}')
+        #print(ast.dump(formula_ast, indent=4))
+
+        dependents = []
+        for node in ast.walk(formula_ast):
+            if not isinstance(node, ast.Call):
+                continue
+            #print(node)
+            func_name = node.func.id
+            if func_name == 'cell_reference':
+                cell_name = node.args[0].value
+                cell_rc = a1_ref_to_rc(cell_name)
+                #print(f'{cell_name}, {cell_rc}')
+                dependents.append(cell_rc)
+            elif func_name == 'range_reference':
+                from_cell = node.args[0].value
+                to_cell   = node.args[1].value
+                dependents.extend(range_to_addresses(from_cell, to_cell))
+            else:
+                pass
+        self.cell_dependents[address] = dependents
+
+        #print(f'{dependents=}')
+
+        for dependent in dependents:
+            precedents = self.cell_precedents.get(dependent, None)
+            if precedents is None:
+                precedents = set()
+                self.cell_precedents[dependent] = precedents
+            precedents.add(address)
+
+        #print(f'{self.cell_dependents=}')
+        #print(f'{self.cell_precedents=}')
 
 
 class CellReferenceTransformer(ast.NodeTransformer):
