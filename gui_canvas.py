@@ -152,7 +152,7 @@ def render_grid(from_row, from_col):
 def render_values():
     global cells
     cells = []
-    new_cells = worksheet.render_cells(0, 0, 20, 20)
+    new_cells = worksheet.render_cells(0, 0, num_cols, num_rows)
     for row in range(num_rows):
         row_cells = []
         for col in range(num_cols):
@@ -165,6 +165,8 @@ def render_values():
             cell_y += cell_height // 2
 
             text = f'r{row+1}c{col+1}'
+            text = new_cells[row][col]
+
             cell_id = canvas.create_text(
                     cell_x, cell_y,
                     text=text,
@@ -173,8 +175,7 @@ def render_values():
             row_cells.append(cell_id)
         cells.append(row_cells)
 
-    print(cells)
-
+    cell_id = cells[4][4]
     canvas.itemconfig(cell_id, text='hello')
 
 
@@ -239,6 +240,7 @@ def double_click_canvas(event):
     cell_selection.select_range(0, tk.END)
     cell_selection.icursor(tk.END)
     canvas.itemconfig(cell_selection_id, state=tk.NORMAL)
+    cell_selection.focus()
 
 
 # Bind the scrollable area to the mouse wheel
