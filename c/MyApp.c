@@ -1,8 +1,11 @@
 #include <windows.h>
+#include <stdio.h>
 
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 char const g_szClassName[] = "myWindowClass";
+
+void draw_grid(HWND hwnd);
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
     WNDCLASSEX wc;
@@ -45,6 +48,38 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 
+    /*
+    if (AllocConsole()) {
+        freopen("CONIN$", "r", stdin);
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+
+        printf("hello: " __DATE__ " T " __TIME__ "\n");
+    } else {
+        // Console allocation failed
+        DWORD error = GetLastError(); // Get the error code
+
+        // Translate the error code into a human-readable message
+        LPVOID errorMsg;
+        FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+            NULL,
+            error,
+            0,
+            (LPSTR)&errorMsg,
+            0,
+            NULL
+        );
+
+        // Display the error message
+        printf("Console allocation failed with error code %d: %s\n", error, (LPSTR)errorMsg);
+
+        // Release the error message buffer
+        LocalFree(errorMsg);
+    }
+    */
+
+
     // Step 3: The Message Loop
     while (GetMessage(&Msg, NULL, 0, 0) > 0) {
         TranslateMessage(&Msg);
@@ -59,11 +94,45 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_CLOSE:
         DestroyWindow(hwnd);
         break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+
+    case WM_PAINT:
+        printf("paint\n");
+        draw_grid(hwnd);
+        break;
+
     default:
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
 }
+
+
+void draw_grid(HWND hwnd) {
+    PAINTSTRUCT ps;
+    RECT rect;
+    HDC hdc;
+    HBRUSH hRedBrush; // Handle to the red brush
+
+    hdc = BeginPaint(hwnd, &ps);
+
+    // Set the drawing color to red
+    SetDCPenColor(hdc, RGB(255, 0, 0));
+    SetDCBrushColor(hdc, RGB(255, 255, 0));
+
+    hRedBrush = CreateSolidBrush(RGB(255, 0, 0));
+
+    // Draw a red filled rectangle
+    SetRect(&rect, 50, 50, 200, 200);
+    FillRect(hdc, &rect, hRedBrush);
+
+    SetRect(&rect, 100, 100, 250, 250);
+    Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+
+
+    EndPaint(hwnd, &ps);
+}
+
