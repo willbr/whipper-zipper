@@ -473,11 +473,13 @@ root.bind('i', edit_cursor)
 
 
 
+#set_formula(1, 1, 'a=5')
+
 select_cell(0, 1)
 #edit_cell(0, 1)
 #set_formula(0, 0, '1')
-set_formula(1, 1, '2')
-set_formula(1, 0, 'b2')
+#set_formula(1, 1, '2')
+#set_formula(1, 0, 'b2')
 #set_formula(2, 0, 'a2')
 #set_formula(3, 0, 'sum(a1:a3)')
 #exit()

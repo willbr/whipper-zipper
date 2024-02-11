@@ -87,6 +87,11 @@ class Worksheet():
         address = (row, col)
         #print(f'set {address=}, {new_formula=}')
 
+        assignment = None
+        matched = re.match('^s*(\w+)\s*=\s*(.*)', new_formula)
+        if matched:
+            assignment, new_formula = matched.groups()
+
         old_value = self.cell_values.get(address, None)
         new_value = self.eval_formula(row, col, new_formula)
 
@@ -94,6 +99,14 @@ class Worksheet():
             changes = [(address, '')]
         else:
             changes = [(address, repr(new_value))]
+
+        if assignment and col != 0:
+            lhs_address = (row, col - 1)
+            lhs_formula = self.get_formula(*lhs_address)
+            if lhs_formula == '':
+                lhs_changes = self.set_formula(*lhs_address, f"'{assignment}'")
+                changes.extend(lhs_changes)
+
 
         if new_value != old_value:
             #print(f'dirty {new_value=} != {old_value=}')
@@ -143,6 +156,7 @@ class Worksheet():
         except Exception as e:
             result = f'#Error {e} {formula=}'
             return result
+
         #print(ast.dump(raw_formula_ast, indent=4))
 
         new_formula_ast = raw_formula_ast
