@@ -1,3 +1,4 @@
+import platform
 import tkinter as tk
 from tkinter import ttk
 from spreadsheet import Worksheet
@@ -39,11 +40,20 @@ num_cols = 5
 worksheet = Worksheet()
 cells = None
 
-style = ttk.Style()
-style.lookup('TEntry', 'background')
-
 font_spec = ('Consolas', 22)
-selection_colour = style.lookup('TEntry', 'background')
+
+style = ttk.Style()
+
+system = platform.system()
+print(f'{system=}')
+
+match system:
+    case 'Windows':
+        selection_colour = 'systemInfoBackground'
+    case _:
+        selection_colour = style.lookup('TEntry', 'background')
+
+print(f'{selection_colour=}')
 
 selected_cell_row = 0
 selected_cell_col = 0
@@ -464,7 +474,7 @@ root.bind('i', edit_cursor)
 
 
 select_cell(0, 1)
-edit_cell(0, 1)
+#edit_cell(0, 1)
 #set_formula(0, 0, '1')
 set_formula(1, 1, '2')
 set_formula(1, 0, 'b2')
