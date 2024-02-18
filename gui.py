@@ -45,7 +45,7 @@ font_spec = ('Consolas', 22)
 style = ttk.Style()
 
 system = platform.system()
-print(f'{system=}')
+#print(f'{system=}')
 
 match system:
     case 'Windows':
@@ -53,7 +53,7 @@ match system:
     case _:
         selection_colour = style.lookup('TEntry', 'background')
 
-print(f'{selection_colour=}')
+#print(f'{selection_colour=}')
 
 selected_cell_row = 0
 selected_cell_col = 0
@@ -472,6 +472,38 @@ root.bind('<Right>', move_cursor)
 root.bind('i', edit_cursor)
 
 
+def on_paste(event=None):
+    text = root.clipboard_get()
+    # print(repr(text))
+
+    if '\t' in text:
+        print('tsv')
+        clipboard_rows = tsv_to_list(text)
+    elif ',' in text:
+        print('csv')
+        clipboard_rows = csv_to_list(text)
+    else:
+        print('text')
+        clipboard_rows = [[text.strip('\n')]]
+
+    row = selected_cell_row
+
+    for clipboard_row in clipboard_rows:
+        col = selected_cell_col
+        for cell in clipboard_row:
+            #print((row, col, cell))
+            s = parse_number(cell)
+            set_formula(row, col, s)
+            col += 1
+        row += 1
+
+
+#root.bind('<Control-c>', on_copy)
+#root.bind('<Command-c>', on_copy)
+
+root.bind('<Control-v>', on_paste)
+root.bind('<Command-v>', on_paste)
+
 
 #set_formula(1, 1, 'a=5')
 
@@ -484,5 +516,39 @@ select_cell(0, 1)
 #set_formula(3, 0, 'sum(a1:a3)')
 #exit()
 
+
+def tsv_to_list(t):
+    lines = t.strip().split('\n')
+    elems = [line.split('\t') for line in lines]
+    return elems
+
+
+def csv_to_list(t):
+    lines = t.strip().split('\n')
+    elems = [line.split(',') for line in lines]
+    return elems
+
+
+def parse_number(s):
+    s = s.strip()
+    if s.startswith('£'):
+        s = s[1:]
+
+    try:
+        i = int(s)
+        return s
+    except ValueError:
+        pass
+
+    try:
+        f = float(s)
+        return s
+    except ValueError:
+        pass
+
+    return repr(s)
+
+
 root.mainloop()
+
 
