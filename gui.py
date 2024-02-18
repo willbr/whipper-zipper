@@ -477,16 +477,18 @@ def on_paste(event=None):
     # print(repr(text))
 
     if '\t' in text:
-        print('tsv')
         clipboard_rows = tsv_to_list(text)
     elif ',' in text:
-        print('csv')
         clipboard_rows = csv_to_list(text)
     else:
-        print('text')
         clipboard_rows = [[text.strip('\n')]]
 
     row = selected_cell_row
+
+
+    cell = clipboard_rows[0][0]
+    s = parse_number(cell)
+    formula_text.set(s)
 
     for clipboard_row in clipboard_rows:
         col = selected_cell_col
