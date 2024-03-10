@@ -100,7 +100,10 @@ class Worksheet():
         if new_value is None:
             changes = [(address, '')]
         else:
-            changes = [(address, repr(new_value))]
+            if isinstance(new_value, float):
+                changes = [(address, f'{new_value:0.2f}')]
+            else:
+                changes = [(address, repr(new_value))]
 
         if assignment and col != 0:
             lhs_address = (row, col - 1)
