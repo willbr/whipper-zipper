@@ -88,9 +88,11 @@ class Worksheet():
         #print(f'set {address=}, {new_formula=}')
 
         assignment = None
-        matched = re.match('^s*(\w+)\s*=\s*(.*)', new_formula)
-        if matched:
-            assignment, new_formula = matched.groups()
+
+        if new_formula is not None:
+            matched = re.match('^s*(\w+)\s*=\s*(.*)', new_formula)
+            if matched:
+                assignment, new_formula = matched.groups()
 
         old_value = self.cell_values.get(address, None)
         new_value = self.eval_formula(row, col, new_formula)
