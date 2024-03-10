@@ -1,4 +1,5 @@
 # whipper-zipper
+
 Silly spreadsheet app
 
 # named relative refs
@@ -9,6 +10,7 @@ Silly spreadsheet app
     =sum(right)
 
 # typed values?
+
 Everything is a double by default
 
 But I can do:
@@ -19,6 +21,7 @@ But I can do:
 
 
 # Use a Worksheet as a User Defined Function (UDF)
+
 Don't use VBA like excel, use worksheets!
 
 Define some cells as input, some as output and everything else is fair game.
@@ -37,7 +40,11 @@ then the worksheet name becomes the function
 |5|          |                       |
 
 # JIT compiler
-I need to learn about X86 assembly
+
+I need to learn about assembly
+
+- x86
+- aarch64
 
 # show code and output at the same time
 
@@ -47,6 +54,8 @@ $output :: $formula
 # modal editing
 vi keys
 
+add a normal excel mode
+
 # use space as tab
 
 type:
@@ -54,3 +63,11 @@ type:
     first-name will
 
 and it creates values over two columns
+
+# autosave
+
+auto save each file to sqlite
+timestamped with an optional name
+
+on startup, reopen last file
+
