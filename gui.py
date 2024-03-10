@@ -101,6 +101,19 @@ formula_entry.pack(side='right', fill='both', expand=True, padx=(5,10))
 formula_entry.configure(font=font_spec)
 formula_entry.insert(0, '')
 
+status_bar_text = tk.StringVar()
+status_bar_text.set('vim normal')
+
+status_bar = tk.Label(
+        root,
+        textvariable=status_bar_text,
+        bd=1,
+        relief=tk.SUNKEN,
+        anchor=tk.E,
+        padx=5,
+        pady=5)
+status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+
 # Create a scrollable canvas
 canvas_frame = tk.Frame(root)
 canvas_frame.pack(fill='both', expand=True)
@@ -330,6 +343,8 @@ def edit_cell(row, col):
                   cell_y + cell_height // 2)
 
 
+    status_bar_text.set('vim insert')
+
     cell_name_text.set(f'{col_name}{row_name}')
     formula = worksheet.get_formula(row, col)
     cell_formula_text.set(formula)
@@ -348,6 +363,8 @@ def select_cell(row, col):
 
     row = max(0, min(row, num_rows - 1))
     col = max(0, min(col, num_cols - 1))
+
+    status_bar_text.set('vim normal')
 
     canvas.itemconfig(cell_formula_id, state=tk.HIDDEN)
 
