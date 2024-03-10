@@ -292,6 +292,12 @@ def cell_name_a1_style(row, col):
 
 
 def click_canvas(event):
+    cf = canvas.itemconfig(cell_formula_id)
+    state = cf['state'][4]
+
+    if state == 'normal':
+        cell_formula_on_enter(event)
+
     #print(event)
     row, col = cell_index(event)
     #print((row,col))
