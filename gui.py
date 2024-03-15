@@ -55,6 +55,8 @@ match system:
 
 #print(f'{selection_colour=}')
 
+cursor_mode = 'excel'
+
 selected_cell_row = 0
 selected_cell_col = 0
 
@@ -411,7 +413,7 @@ def move_cursor(event):
     ctrl_pressed  = event.state & ctrl_mask
     alt_pressed   = event.state & alt_mask
 
-    #print(event)
+    # print(event)
 
     if shift_pressed:
         if event.keysym == 'Tab':
@@ -477,22 +479,67 @@ def escape(event):
     select_cell(selected_cell_row, selected_cell_col)
     root.focus_set()
 
-root.bind('<Escape>', escape)
+cell_formula.bind('<Escape>', escape)
 
-root.bind('<Return>', move_cursor)
-root.bind('<Tab>', move_cursor)
+def on_keypress(event):
+    if event.widget != root:
+        return
 
-root.bind('h', move_cursor)
-root.bind('j', move_cursor)
-root.bind('k', move_cursor)
-root.bind('l', move_cursor)
+    #print(event)
 
-root.bind('<Up>',    move_cursor)
-root.bind('<Down>',  move_cursor)
-root.bind('<Left>',  move_cursor)
-root.bind('<Right>', move_cursor)
+    match cursor_mode:
+        case 'excel':
+            return on_keypress_excel(event)
+        case 'vim':
+            return on_keypress_vim(event)
+        case _:
+            assert False
 
-root.bind('i', edit_cursor)
+
+def on_keypress_excel(event):
+    print(event)
+    match event.keysym:
+        case 'Escape':
+            return escape(event)
+        case 'Tab' | 'Return' | 'Up' | 'Down' | 'Left' | 'Right':
+            return move_cursor(event)
+        case 'BackSpace' | 'Delete':
+            pass
+        case 'Prior' | 'Next':
+            pass
+        case 'Control_L' | 'Control_R' | 'Alt_L' | 'Alt_R':
+            pass
+        case 'Alt_L' | 'Alt_R':
+            pass
+        case 'Shift_L' | 'Shift_R':
+            pass
+        case _:
+            pass
+
+    if event.char == '':
+        #print(event)
+        return
+
+    edit_cell(selected_cell_row, selected_cell_col)
+    cell_formula_text.set(event.char)
+    cell_formula.select_range(tk.END, tk.END)
+    cell_formula.icursor(tk.END)
+
+
+def on_keypress_vim(event):
+    #print(event)
+    match event.keysym:
+        case 'Escape':
+            return escape(event)
+        case 'Tab' | 'Return' | 'h' | 'j'| 'k' | 'l' | 'Up' | 'Down' | 'Left' | 'Right':
+            return move_cursor(event)
+        case 'i':
+            return edit_cursor(event)
+        case _:
+            pass
+
+
+root.bind('<KeyPress>', on_keypress)
 
 
 def on_paste(event=None):
@@ -530,7 +577,7 @@ root.bind('<Control-v>', on_paste)
 root.bind('<Command-v>', on_paste)
 
 
-#set_formula(1, 1, 'a=5')
+set_formula(1, 1, '"hello')
 
 select_cell(0, 1)
 #edit_cell(0, 1)
