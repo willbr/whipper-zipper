@@ -49,9 +49,12 @@ system = platform.system()
 
 match system:
     case 'Windows':
-        selection_colour = 'systemInfoBackground'
+        selection_colour = 'white'
+        #range_selection_colour = 'systemInfoBackground'
+        range_selection_colour = 'lightblue'
     case _:
         selection_colour = style.lookup('TEntry', 'background')
+        range_selection_colour = style.lookup('TEntry', 'background')
 
 #print(f'{selection_colour=}')
 
@@ -122,7 +125,7 @@ canvas_frame.pack(fill='both', expand=True)
 canvas_frame.grid_rowconfigure(1, weight=1)
 canvas_frame.grid_columnconfigure(1, weight=1)
 
-canvas = tk.Canvas(canvas_frame, height=canvas_height)
+canvas = tk.Canvas(canvas_frame, height=canvas_height, bg='#fff')
 canvas.grid(row=1, column=1, sticky="nsew")
 
 cell_formula_text = tk.StringVar()
@@ -145,12 +148,21 @@ canvas.coords(cell_formula_id,
               first_cell_y + cell_height // 2)
 
 
+range_selection_id = canvas.create_rectangle(
+        50, 100, 250, 200,
+        fill=range_selection_colour,
+        tags=('range-selection',),
+        state=tk.HIDDEN)
+
+
+
 cell_selection_id = canvas.create_rectangle(
         50, 100, 250, 200,
         fill=selection_colour,
-        tags=('selection',),
+        outline='#444',
+        width=3,
+        tags=('cell-selection',),
         state=tk.HIDDEN)
-
 
 def mirror_text(event):
     if event.widget == formula_entry:
@@ -319,6 +331,51 @@ def click_canvas(event):
 
     select_cell(row, col)
 
+def press_canvas(event):
+    click_canvas(event)
+
+    cell_x = row_header_width  + (cell_width  * selected_cell_col)
+    cell_y = col_header_height + (cell_height * selected_cell_row)
+
+    canvas.coords(range_selection_id,
+                  cell_x, cell_y,
+                  cell_x + cell_width, cell_y + cell_height)
+    canvas.itemconfig(range_selection_id, state=tk.NORMAL)
+
+
+def release_canvas(event):
+    pass
+    #row, col = cell_index(event)
+    #select_cell(row, col)
+    #canvas.itemconfig(range_selection_id, state=tk.HIDDEN)
+
+
+def motion_canvas(event):
+    row1, col1 = cell_index(event)
+    row2, col2 = selected_cell_row, selected_cell_col
+
+    row1 = max(0, min(row1, num_rows - 1))
+    row2 = max(0, min(row2, num_rows - 1))
+    col1 = max(0, min(col1, num_cols - 1))
+    col2 = max(0, min(col2, num_cols - 1))
+
+    if row1 > row2:
+        row1, row2 = row2, row1
+
+    if col1 > col2:
+        col1, col2 = col2, col1
+
+    x1 = row_header_width  + (cell_width  * col1)
+    y1 = col_header_height + (cell_height * row1)
+
+    x2 = row_header_width  + (cell_width  * col2) + cell_width
+    y2 = col_header_height + (cell_height * row2) + cell_height
+    
+    canvas.coords(range_selection_id,
+                  x1, y1,
+                  x2, y2)
+    #print(event)
+
 
 def double_click_canvas(event):
     row, col = cell_index(event)
@@ -354,6 +411,7 @@ def edit_cell(row, col):
     cell_formula.select_range(0, tk.END)
     cell_formula.icursor(tk.END)
 
+    canvas.itemconfig(range_selection_id, state=tk.HIDDEN)
     canvas.itemconfig(cell_selection_id, state=tk.HIDDEN)
     canvas.itemconfig(cell_formula_id, state=tk.NORMAL)
     cell_formula.focus()
@@ -470,6 +528,10 @@ render_worksheet()
 # Bind the scrollable area to the mouse wheel
 #canvas.bind("<Configure>", render_worksheet)
 canvas.bind("<Button-1>", click_canvas)
+canvas.bind("<ButtonPress-1>", press_canvas)
+canvas.bind("<ButtonRelease-1>", release_canvas)
+canvas.bind("<B1-Motion>", motion_canvas)
+
 canvas.bind("<Double-1>", double_click_canvas)
 #canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
 
@@ -577,9 +639,9 @@ root.bind('<Control-v>', on_paste)
 root.bind('<Command-v>', on_paste)
 
 
-set_formula(1, 1, '"hello')
+#set_formula(1, 1, '"hello')
 
-select_cell(0, 1)
+select_cell(0, 0)
 #edit_cell(0, 1)
 #set_formula(0, 0, '1')
 #set_formula(1, 1, '2')
