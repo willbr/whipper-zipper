@@ -158,6 +158,10 @@ class Worksheet():
         filename = rc_to_a1_ref(row, col)
         try:
             raw_formula_ast = ast.parse(py_formula, filename=filename, mode='eval')
+        except SyntaxError as e:
+            print(e)
+            result = f'#Error {e} {formula=}'
+            return result
         except Exception as e:
             result = f'#Error {e} {formula=}'
             return result
