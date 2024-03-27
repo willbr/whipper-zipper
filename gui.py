@@ -26,6 +26,17 @@ from spreadsheet import Worksheet
 # ctrl+o open workbook
 # ctrl+s save workbook
 
+# ctrl+d fill down
+# ctrl+r fill right
+
+# alt+=  autosum
+
+# insert selection into formula
+
+# custom cell size
+# custom cell format
+# custom number format
+
 root = tk.Tk()
 root.title("Spreadsheet")
 root.geometry("1080x1080")
