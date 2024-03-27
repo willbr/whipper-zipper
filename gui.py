@@ -71,6 +71,12 @@ match system:
 
 cursor_mode = 'excel'
 
+row_headers = []
+col_headers = []
+
+viewport_offset_row = 0
+viewport_offset_col = 0
+
 selected_cell_row = 0
 selected_cell_col = 0
 
@@ -248,17 +254,34 @@ canvas.configure(
         yscrollcommand=scroll_y)
 
 
-def render_grid(from_row, from_col):
+def render_headers():
     x = first_cell_x
     for col in range(num_cols):
-        canvas.create_text(x + cell_width // 2, cell_height // 2, text=chr(97 + col), anchor="center", font=font_spec)
+        col_id = canvas.create_text(x + cell_width // 2, cell_height // 2, text=chr(97 + col), anchor="center", font=font_spec)
+        col_headers.append(col_id)
         x += cell_width  # Start from the second column
 
     y = cell_height // 1
     for row in range(num_rows):
         y = (row + 1) * cell_height  # Start from the second row
-        canvas.create_text(cell_width // 4, y + cell_height // 2, text=str(row + 1), anchor="center", font=font_spec)
+        row_id = canvas.create_text(cell_width // 4, y + cell_height // 2, text=str(row + 1), anchor="center", font=font_spec)
+        row_headers.append(row_id)
 
+
+def update_headers():
+    row = viewport_offset_row
+    col = viewport_offset_col
+
+    for row_id in row_headers:
+        canvas.itemconfig(row_id, text=str(row + 1))
+        row += 1
+
+    for col_id in col_headers:
+        canvas.itemconfig(col_id, text=chr(97 + col))
+        col += 1
+
+
+def render_grid():
     canvas_width  = root.winfo_width()
     canvas_height  = root.winfo_height()
 
@@ -274,7 +297,7 @@ def render_grid(from_row, from_col):
         x += cell_width
 
 
-def render_values():
+def create_cells():
     global cells
     cells = []
     new_cells = worksheet.render_cells(0, 0, num_cols, num_rows)
@@ -289,7 +312,6 @@ def render_values():
             cell_x += cell_width  // 32
             cell_y += cell_height // 2
 
-            text = worksheet.get_value(row, col)
             text = new_cells[row][col]
 
             cell_id = canvas.create_text(
@@ -300,8 +322,20 @@ def render_values():
             row_cells.append(cell_id)
         cells.append(row_cells)
 
-    #cell_id = cells[4][4]
-    #canvas.itemconfig(cell_id, text='hello')
+
+def update_cells():
+    new_cells = worksheet.render_cells(
+        viewport_offset_col, viewport_offset_row,
+        num_cols, num_rows)
+
+    for row in range(num_rows):
+        row_cells = []
+        for col in range(num_cols):
+            cell_id = cells[row][col]
+            new_text = new_cells[row][col]
+            if new_text is None:
+                new_text = ''
+            canvas.itemconfig(cell_id, text=new_text)
 
 
 def set_formula(row, col, formula):
@@ -314,8 +348,9 @@ def set_formula(row, col, formula):
 
 
 def render_worksheet(event=None):
-    render_grid(0, 0)
-    render_values()
+    render_grid()
+    render_headers()
+    create_cells()
 
 
 def cell_index(event):
@@ -391,6 +426,20 @@ def motion_canvas(event):
     col_name2, row_name2 = cell_name_a1_style(row2, col2)
 
     cell_name_text.set(f'{col_name1}{row_name1}:{col_name2}{row_name2}')
+
+
+def scroll_canvas(event):
+    global viewport_offset_row
+
+    if event.delta > 0:
+        viewport_offset_row -= 4
+    else:
+        viewport_offset_row += 4
+
+    viewport_offset_row = max(viewport_offset_row, 0)
+
+    update_headers()
+    update_cells()
 
 
 def double_click_canvas(event):
@@ -549,6 +598,7 @@ canvas.bind("<Button-1>", click_canvas)
 canvas.bind("<ButtonPress-1>", press_canvas)
 canvas.bind("<ButtonRelease-1>", release_canvas)
 canvas.bind("<B1-Motion>", motion_canvas)
+canvas.bind("<MouseWheel>", scroll_canvas)
 
 canvas.bind("<Double-1>", double_click_canvas)
 #canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
@@ -577,7 +627,7 @@ def on_keypress(event):
 
 
 def on_keypress_excel(event):
-    print(event)
+    #print(event)
     match event.keysym:
         case 'Escape':
             return escape(event)
