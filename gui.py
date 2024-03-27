@@ -1,5 +1,6 @@
 import platform
 import tkinter as tk
+import subprocess
 from tkinter import ttk
 from spreadsheet import Worksheet
 
@@ -58,16 +59,37 @@ style = ttk.Style()
 system = platform.system()
 #print(f'{system=}')
 
+def macosx_is_darkmode():
+    try:
+        result = subprocess.run(
+                ['defaults', 'read', '-g', 'AppleInterfaceStyle'],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True)
+        return 'Dark' in result.stdout
+    except subprocess.CalledProcessError:
+        return False
+
+
 match system:
     case 'Windows':
-        selection_colour = 'white'
+        cell_selection_fill = 'white'
+        cell_selection_outline = '#444'
         #range_selection_colour = 'systemInfoBackground'
         range_selection_colour = 'lightblue'
+    case 'Darwin':
+        if macosx_is_darkmode():
+            spreadsheet_background_colour = '#444'
+            cell_selection_fill = '#222'
+            cell_selection_outline = '#444'
+            range_selection_colour = '#449'
+        else:
+            cell_selection_fill = 'white'
+            cell_selection_outline = '#444'
+            range_selection_colour = 'lightblue'
     case _:
-        selection_colour = style.lookup('TEntry', 'background')
-        range_selection_colour = style.lookup('TEntry', 'background')
-
-#print(f'{selection_colour=}')
+        raise ValueError(f'unknown {system=}')
 
 cursor_mode = 'excel'
 
@@ -144,14 +166,17 @@ canvas_frame.pack(fill='both', expand=True)
 canvas_frame.grid_rowconfigure(1, weight=1)
 canvas_frame.grid_columnconfigure(1, weight=1)
 
-canvas = tk.Canvas(canvas_frame, height=canvas_height, bg='#fff')
+canvas = tk.Canvas(
+        canvas_frame,
+        height=canvas_height,
+        background=spreadsheet_background_colour)
 canvas.grid(row=1, column=1, sticky="nsew")
 
 cell_formula_text = tk.StringVar()
 cell_formula = tk.Entry(root,
                           textvariable=cell_formula_text,
                           highlightthickness=1,
-                          highlightbackground='gray')
+                          highlightbackground='red')
 cell_formula.configure(font=font_spec)
 cell_formula.insert(0, '')
 cell_formula.focus()
@@ -177,8 +202,8 @@ range_selection_id = canvas.create_rectangle(
 
 cell_selection_id = canvas.create_rectangle(
         50, 100, 250, 200,
-        fill=selection_colour,
-        outline='#444',
+        fill=cell_selection_fill,
+        outline=cell_selection_outline,
         width=3,
         tags=('cell-selection',),
         state=tk.HIDDEN)
@@ -497,6 +522,7 @@ def click_canvas(event):
 
 
 def press_canvas(event):
+    print('press')
     click_canvas(event)
     motion_canvas(event)
     canvas.itemconfig(range_selection_id, state=tk.NORMAL)
@@ -573,6 +599,7 @@ def scroll_canvas(event):
 def double_click_canvas(event):
     row, col = cell_index(event, 'worldspace')
     edit_cell(row, col)
+    print('double')
 
 
 def edit_cell(row, col):
@@ -740,6 +767,8 @@ canvas.bind("<MouseWheel>", scroll_canvas)
 canvas.bind("<Double-1>", double_click_canvas)
 #canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
 
+root.update()
+
 def escape(event):
     #print(event)
     #canvas.itemconfig(cell_formula_id, state=tk.HIDDEN)
@@ -889,6 +918,7 @@ def parse_number(s):
     return repr(s)
 
 
+root.bind('<Double-1>', lambda e: print(e))
 root.mainloop()
 
 
