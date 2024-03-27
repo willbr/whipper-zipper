@@ -443,6 +443,8 @@ def select_cell(row, col):
                   cell_x + cell_width, cell_y + cell_height)
     canvas.itemconfig(cell_selection_id, state=tk.NORMAL)
 
+    canvas.itemconfig(range_selection_id, state=tk.HIDDEN)
+
     col_name, row_name = cell_name_a1_style(row, col)
 
 
