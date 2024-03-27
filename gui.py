@@ -376,6 +376,11 @@ def motion_canvas(event):
                   x2, y2)
     #print(event)
 
+    col_name1, row_name1 = cell_name_a1_style(row1, col1)
+    col_name2, row_name2 = cell_name_a1_style(row2, col2)
+
+    cell_name_text.set(f'{col_name1}{row_name1}:{col_name2}{row_name2}')
+
 
 def double_click_canvas(event):
     row, col = cell_index(event)
