@@ -45,8 +45,8 @@ root.minsize(400,220)
 root.update_idletasks()
 
 # Define the number of rows and columns in the spreadsheet
-num_rows = 15
-num_cols = 5
+num_rows = 60
+num_cols = 10
 
 worksheet = Worksheet()
 cells = None
@@ -79,6 +79,8 @@ viewport_offset_col = 0
 
 selected_cell_row = 0
 selected_cell_col = 0
+
+selected_range = None
 
 shift_mask = 0x0001
 ctrl_mask  = 0x0004
@@ -196,8 +198,9 @@ def mirror_text(event):
 
 def formula_on_enter(event):
     formula =  formula_text.get()
-    set_formula(selected_cell_row, selected_cell_col, formula)
-    select_cell(selected_cell_row, selected_cell_col)
+    row, col = get_row_col('cell_selection', 'worldspace')
+    set_formula(row, col, formula)
+    select_cell(row, col)
     return "break"
 
 
@@ -206,19 +209,24 @@ def formula_on_tab(event):
     return "break"
 
 def cell_formula_on_enter(event):
+    row, col = get_row_col('cell_selection', 'worldspace')
+
     formula =  formula_text.get()
-    set_formula(selected_cell_row, selected_cell_col, formula)
+    set_formula(row, col, formula)
+
     shift_pressed = event.state & shift_mask
     offset = -1 if shift_pressed else 1
-    edit_cell(selected_cell_row + offset, selected_cell_col)
+    edit_cell(row + offset, col)
     return "break"
 
 def cell_formula_on_tab(event):
+    row, col = get_row_col('cell_selection', 'worldspace')
+
     formula =  formula_text.get()
-    set_formula(selected_cell_row, selected_cell_col, formula)
+    set_formula(row, col, formula)
     shift_pressed = event.state & shift_mask
     offset = -1 if shift_pressed else 1
-    edit_cell(selected_cell_row, selected_cell_col + offset)
+    edit_cell(row, col + offset)
     return "break"
 
 
@@ -289,11 +297,11 @@ def render_grid():
     y = 0
     for row in range(1, num_rows + 2):
         y += cell_height
-        canvas.create_line(0, y, canvas_width, y, fill="gray")
+        canvas.create_line(0, y, canvas_width*2, y, fill="gray")
 
     x = cell_width // 2
     for col in range(1, num_cols + 2):
-        canvas.create_line(x, 0, x, canvas_height, fill="gray")
+        canvas.create_line(x, 0, x, canvas_height*2, fill="gray")
         x += cell_width
 
 
@@ -338,11 +346,101 @@ def update_cells():
             canvas.itemconfig(cell_id, text=new_text)
 
 
+def get_row_col(name, space):
+    match name:
+        case 'cell_selection':
+            row, col = selected_cell_row, selected_cell_col
+        case 'selected_range_from':
+            [row1, col1], [row2, col2] = selected_range
+            row, col = row1, col1
+        case 'selected_range_to':
+            [row1, col1], [row2, col2] = selected_range
+            row, col = row2, col2
+
+        case _:
+            raise ValueError(f'{name=} {space=}')
+
+    match space:
+        case 'screenspace':
+            row -= viewport_offset_row
+            col -= viewport_offset_col
+        case 'worldspace':
+            pass
+        case _:
+            raise ValueError(f'{name=} {space=}')
+
+    return row, col
+
+
+def get_xy(name, space):
+    row, col = get_row_col(name, space)
+
+    x = row_header_width   + (cell_width  * col)
+    y = col_header_height  + (cell_height  * row)
+    return x, y
+
+
+def get_rect_row_col(name, space):
+    if name != 'selected_range':
+        assert False
+    row1, col1 = get_row_col('selected_range_from', space)
+    row2, col2 = get_row_col('selected_range_to',   space)
+
+    return (row1, col1), (row2, col2)
+
+
+def get_rect_xy(name, space):
+    if name != 'selected_range':
+        assert False
+
+    x1, y1 = get_xy('selected_range_from', space)
+    x2, y2 = get_xy('selected_range_to',   space)
+
+    x2 += cell_width
+    y2 += cell_height
+
+    return (x1, y1), (x2, y2)
+
+    #x1 = row_header_width  + (cell_width  * col1)
+    #y1 = col_header_height + (cell_height * row1)
+
+    #x2 = row_header_width  + (cell_width  * col2) + cell_width
+    #y2 = col_header_height + (cell_height * row2) + cell_height
+
+
+def update_selection():
+    # cell formula
+    # cell selection
+    # range selection
+
+    cell_x, cell_y = get_xy('cell_selection', 'screenspace')
+
+    if cell_y == 0:
+        cell_y -= col_header_height
+
+    canvas.coords(cell_formula_id,
+                  cell_x + cell_width // 2,
+                  cell_y + cell_height // 2)
+
+    canvas.coords(cell_selection_id,
+                  cell_x, cell_y,
+                  cell_x + cell_width, cell_y + cell_height)
+
+
+    if selected_range is None:
+        print('no selection')
+        return
+
+    render_range_selection()
+
+
 def set_formula(row, col, formula):
     changes = worksheet.set_formula(row, col, formula)
     #print(changes)
     for change in changes:
         (row, col), new_value = change
+        row -= viewport_offset_row
+        col -= viewport_offset_col
         cell_id = cells[row][col]
         canvas.itemconfig(cell_id, text=new_value)
 
@@ -353,15 +451,35 @@ def render_worksheet(event=None):
     create_cells()
 
 
-def cell_index(event):
+def cell_index(event, space):
     row = ((event.y + col_header_height) // cell_height) - 2
     col = ((event.x + row_header_width) // cell_width) - 1
+
+    if space == 'worldspace':
+        row += viewport_offset_row
+        col += viewport_offset_col
+
     return row, col
 
 
 def cell_name_a1_style(row, col):
     col_name = chr(97 + col)
     return col_name, row + 1
+
+
+def range_name_a1_style(row1, col1, row2, col2):
+    col_name1, row_name1 = cell_name_a1_style(row1, col1)
+    col_name2, row_name2 = cell_name_a1_style(row2, col2)
+
+    lhs = f'{col_name1}{row_name1}'
+    rhs = f'{col_name2}{row_name2}'
+
+    if lhs == rhs:
+        text = lhs
+    else:
+        text = lhs + ':' + rhs
+
+    return text
 
 
 def click_canvas(event):
@@ -372,32 +490,26 @@ def click_canvas(event):
         cell_formula_on_enter(event)
 
     #print(event)
-    row, col = cell_index(event)
+    row, col = cell_index(event, 'worldspace')
     #print((row,col))
 
     select_cell(row, col)
 
+
 def press_canvas(event):
     click_canvas(event)
-
-    cell_x = row_header_width  + (cell_width  * selected_cell_col)
-    cell_y = col_header_height + (cell_height * selected_cell_row)
-
-    canvas.coords(range_selection_id,
-                  cell_x, cell_y,
-                  cell_x + cell_width, cell_y + cell_height)
+    motion_canvas(event)
     canvas.itemconfig(range_selection_id, state=tk.NORMAL)
 
 
 def release_canvas(event):
     pass
-    #row, col = cell_index(event)
-    #select_cell(row, col)
-    #canvas.itemconfig(range_selection_id, state=tk.HIDDEN)
 
 
 def motion_canvas(event):
-    row1, col1 = cell_index(event)
+    global selected_range
+
+    row1, col1 = cell_index(event, 'worldspace')
     row2, col2 = selected_cell_row, selected_cell_col
 
     row1 = max(0, min(row1, num_rows - 1))
@@ -411,21 +523,36 @@ def motion_canvas(event):
     if col1 > col2:
         col1, col2 = col2, col1
 
-    x1 = row_header_width  + (cell_width  * col1)
-    y1 = col_header_height + (cell_height * row1)
+    selected_range = [[row1, col1], [row2, col2]]
 
-    x2 = row_header_width  + (cell_width  * col2) + cell_width
-    y2 = col_header_height + (cell_height * row2) + cell_height
+    render_range_selection()
+
+    (row1, col1), (row2, col2) = get_rect_row_col('selected_range', 'worldspace')
+
+    text = range_name_a1_style(row1, col1, row2, col2)
+
+    cell_name_text.set(text)
+
+
+def render_range_selection():
+    if selected_range is None:
+        return
+
+    (row1, col1), (row2, col2) = get_rect_row_col('selected_range', 'worldspace')
+
+    (x1, y1), (x2, y2) = get_rect_xy('selected_range', 'screenspace')
+
+    if y2 <= col_header_height:
+        (x1, y1), (x2, y2) = (0, 0), (0, 0)
+        #canvas.itemconfig(range_selection_id, state=tk.HIDDEN)
     
+    if y1 <= col_header_height:
+        y1 = col_header_height
+
     canvas.coords(range_selection_id,
                   x1, y1,
                   x2, y2)
-    #print(event)
 
-    col_name1, row_name1 = cell_name_a1_style(row1, col1)
-    col_name2, row_name2 = cell_name_a1_style(row2, col2)
-
-    cell_name_text.set(f'{col_name1}{row_name1}:{col_name2}{row_name2}')
 
 
 def scroll_canvas(event):
@@ -440,10 +567,11 @@ def scroll_canvas(event):
 
     update_headers()
     update_cells()
+    update_selection()
 
 
 def double_click_canvas(event):
-    row, col = cell_index(event)
+    row, col = cell_index(event, 'worldspace')
     edit_cell(row, col)
 
 
@@ -454,18 +582,14 @@ def edit_cell(row, col):
     row = max(0, min(row, num_rows - 1))
     col = max(0, min(col, num_cols - 1))
 
-    selected_cell_row = row
-    selected_cell_col = col
+    select_cell(row, col)
 
     col_name, row_name = cell_name_a1_style(row, col)
 
-    #print((row,col))
-    cell_x = row_header_width  + (cell_width  * col)
-    cell_y = col_header_height + (cell_height * row)
+    cell_x, cell_y = get_xy('cell_selection', 'screenspace')
     canvas.coords(cell_formula_id,
                   cell_x + cell_width // 2,
                   cell_y + cell_height // 2)
-
 
     status_bar_text.set('vim insert')
 
@@ -486,8 +610,12 @@ def select_cell(row, col):
     global selected_cell_row
     global selected_cell_col
 
+    #print((row, col))
+
     row = max(0, min(row, num_rows - 1))
     col = max(0, min(col, num_cols - 1))
+
+    select_range(row, col, row, col)
 
     status_bar_text.set('vim normal')
 
@@ -496,17 +624,16 @@ def select_cell(row, col):
     selected_cell_row = row
     selected_cell_col = col
 
-    cell_x = row_header_width  + (cell_width  * col)
-    cell_y = col_header_height + (cell_height * row)
+
+    cell_x, cell_y = get_xy('cell_selection', 'screenspace')
+
     canvas.coords(cell_selection_id,
                   cell_x, cell_y,
                   cell_x + cell_width, cell_y + cell_height)
     canvas.itemconfig(cell_selection_id, state=tk.NORMAL)
 
-    canvas.itemconfig(range_selection_id, state=tk.HIDDEN)
 
     col_name, row_name = cell_name_a1_style(row, col)
-
 
     if (row, col) == (-1, -1):
         print('#')
@@ -528,6 +655,15 @@ def select_cell(row, col):
     formula_entry.icursor(tk.END)
 
     root.focus()
+
+
+def select_range(row1, col1, row2, col2):
+    global selected_range
+
+    selected_range = (row1, col1), (row2, col2)
+    canvas.itemconfig(range_selection_id, state=tk.NORMAL)
+
+    render_range_selection()
 
 
 def move_cursor(event):
@@ -575,7 +711,8 @@ def move_cursor(event):
         else:
             return "break"
 
-    row, col = selected_cell_row, selected_cell_col
+    row, col = get_row_col('cell_selection', 'worldspace')
+    #print((row, col))
 
     row += y
     col += x
@@ -710,6 +847,7 @@ root.bind('<Command-v>', on_paste)
 #set_formula(1, 1, '"hello')
 
 select_cell(0, 0)
+select_cell(4, 1)
 #edit_cell(0, 1)
 #set_formula(0, 0, '1')
 #set_formula(1, 1, '2')
