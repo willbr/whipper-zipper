@@ -484,6 +484,7 @@ def update_selection():
 
 
 def set_formula(row, col, formula):
+
     changes = worksheet.set_formula(row, col, formula)
     #print(changes)
     for change in changes:
@@ -926,7 +927,10 @@ root.bind('<Control-v>', on_paste)
 root.bind('<Command-v>', on_paste)
 
 
-#set_formula(1, 1, '"hello')
+set_formula(1, 1, '1')
+set_formula(2, 1, '2')
+set_formula(3, 1, '3')
+set_formula(4, 1, 'sum above')
 
 select_cell(0, 0)
 select_cell(4, 1)
