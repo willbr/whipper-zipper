@@ -277,8 +277,19 @@ def scroll_x(*args):
     pass
 
 def scroll_y(*args):
-    print(args)
-    pass
+    #print(args)
+    match args:
+        case 'moveto', offset:
+            offset = float(offset)
+            new_offset_rows = int(viewport_max_row * offset)
+            update_scroll(new_offset_rows, viewport_offset_col)
+        case 'scroll', offset, 'pages':
+            page_size = 10
+            offset = int(offset) * page_size
+            new_offset_rows = viewport_offset_row + offset
+            update_scroll(new_offset_rows, viewport_offset_col)
+        case _:
+            raise ValueError(f'{args=}')
 
 # Create a horizontal scrollbar
 scrollbar_x = tk.Scrollbar(canvas_frame, orient="horizontal", command=scroll_x)
@@ -595,21 +606,36 @@ def render_range_selection():
 
 
 def scroll_canvas(event):
-    global viewport_offset_row
-    global viewport_max_row
-
     if event.delta > 0:
-        viewport_offset_row -= 4
+        row_offset = -4
     else:
-        viewport_offset_row += 4
+        row_offset = +4
+
+    update_scroll(viewport_offset_row + row_offset, viewport_offset_col)
+
+
+def update_scroll(row, col):
+    global viewport_offset_row
+    global viewport_offset_col
+    global viewport_max_row
+    global viewport_max_col
+
+    #print((row, col))
+
+    viewport_offset_row = row
+    viewport_offset_col = col
 
     viewport_offset_row = max(viewport_offset_row, 0)
+    viewport_offset_col = max(viewport_offset_col, 0)
 
     (row1, col1), (row2, col2) = get_rect_row_col('viewport', 'worldspace')
     #print((row1, col1), (row2, col2))
 
     if row2 > viewport_max_row:
         viewport_max_row = row2
+
+    if col2 > viewport_max_col:
+        viewport_max_col = col2
 
     first = row1 / viewport_max_row
     last  = row2 / viewport_max_row
