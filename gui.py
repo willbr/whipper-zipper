@@ -74,6 +74,7 @@ def macosx_is_darkmode():
 
 match system:
     case 'Windows':
+        spreadsheet_background_colour = '#fffafa'
         cell_selection_fill = 'white'
         cell_selection_outline = '#444'
         #range_selection_colour = 'systemInfoBackground'
