@@ -100,6 +100,12 @@ col_headers = []
 viewport_offset_row = 0
 viewport_offset_col = 0
 
+viewport_width  = 6
+viewport_height = 19
+
+viewport_max_row = 20
+viewport_max_col = 6
+
 selected_cell_row = 0
 selected_cell_col = 0
 
@@ -267,26 +273,22 @@ cell_formula.bind('<KeyRelease>', mirror_text)
 
 
 def scroll_x(*args):
-    #print(args)
+    print(args)
     pass
 
 def scroll_y(*args):
-    #print(args)
+    print(args)
     pass
 
 # Create a horizontal scrollbar
 scrollbar_x = tk.Scrollbar(canvas_frame, orient="horizontal", command=scroll_x)
 scrollbar_x.grid(row=2, column=1, sticky="ew")
+scrollbar_x.set(0.0, 0.5)
 
 # Create a vertical scrollbar
 scrollbar_y = tk.Scrollbar(canvas_frame, orient="vertical", command=scroll_y)
 scrollbar_y.grid(row=1, column=2, sticky="ns")
-
-# Configure the canvas to use the scrollbar
-canvas.configure(
-        xscrollcommand=scroll_x,
-        yscrollcommand=scroll_y)
-
+scrollbar_y.set(0.0, 0.5)
 
 def render_headers():
     x = first_cell_x
@@ -382,7 +384,12 @@ def get_row_col(name, space):
         case 'selected_range_to':
             [row1, col1], [row2, col2] = selected_range
             row, col = row2, col2
-
+        case 'viewport_from':
+            row, col = viewport_offset_row, viewport_offset_col
+        case 'viewport_to':
+            row, col = viewport_offset_row, viewport_offset_col
+            row += viewport_height
+            col += viewport_width
         case _:
             raise ValueError(f'{name=} {space=}')
 
@@ -407,10 +414,15 @@ def get_xy(name, space):
 
 
 def get_rect_row_col(name, space):
-    if name != 'selected_range':
-        assert False
-    row1, col1 = get_row_col('selected_range_from', space)
-    row2, col2 = get_row_col('selected_range_to',   space)
+    match name:
+        case 'selected_range':
+            row1, col1 = get_row_col('selected_range_from', space)
+            row2, col2 = get_row_col('selected_range_to',   space)
+        case 'viewport':
+            row1, col1 = get_row_col('viewport_from', space)
+            row2, col2 = get_row_col('viewport_to',   space)
+        case _:
+            raise ValueError(f'{name=} {space=}')
 
     return (row1, col1), (row2, col2)
 
@@ -584,6 +596,7 @@ def render_range_selection():
 
 def scroll_canvas(event):
     global viewport_offset_row
+    global viewport_max_row
 
     if event.delta > 0:
         viewport_offset_row -= 4
@@ -591,6 +604,19 @@ def scroll_canvas(event):
         viewport_offset_row += 4
 
     viewport_offset_row = max(viewport_offset_row, 0)
+
+    (row1, col1), (row2, col2) = get_rect_row_col('viewport', 'worldspace')
+    #print((row1, col1), (row2, col2))
+
+    if row2 > viewport_max_row:
+        viewport_max_row = row2
+
+    first = row1 / viewport_max_row
+    last  = row2 / viewport_max_row
+
+    #print((first, last))
+
+    scrollbar_y.set(first, last)
 
     update_headers()
     update_cells()
