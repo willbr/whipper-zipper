@@ -546,7 +546,7 @@ def click_canvas(event):
 
 
 def press_canvas(event):
-    print('press')
+    #print('press')
     click_canvas(event)
     motion_canvas(event)
     canvas.itemconfig(range_selection_id, state=tk.NORMAL)
@@ -652,7 +652,7 @@ def update_scroll(row, col):
 def double_click_canvas(event):
     row, col = cell_index(event, 'worldspace')
     edit_cell(row, col)
-    print('double')
+    #print('double')
 
 
 def edit_cell(row, col):
@@ -971,7 +971,7 @@ def parse_number(s):
     return repr(s)
 
 
-root.bind('<Double-1>', lambda e: print(e))
+#root.bind('<Double-1>', lambda e: print(e))
 root.mainloop()
 
 
