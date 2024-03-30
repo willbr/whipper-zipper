@@ -46,8 +46,8 @@ root.minsize(400,220)
 root.update_idletasks()
 
 # Define the number of rows and columns in the spreadsheet
-num_rows = 60
-num_cols = 10
+number_of_visible_rows = 60
+number_of_visible_cols = 10
 
 worksheet = Worksheet()
 cells = None
@@ -303,13 +303,13 @@ scrollbar_y.set(0.0, 0.5)
 
 def render_headers():
     x = first_cell_x
-    for col in range(num_cols):
+    for col in range(number_of_visible_cols):
         col_id = canvas.create_text(x + cell_width // 2, cell_height // 2, text=chr(97 + col), anchor="center", font=font_spec)
         col_headers.append(col_id)
         x += cell_width  # Start from the second column
 
     y = cell_height // 1
-    for row in range(num_rows):
+    for row in range(number_of_visible_rows):
         y = (row + 1) * cell_height  # Start from the second row
         row_id = canvas.create_text(cell_width // 4, y + cell_height // 2, text=str(row + 1), anchor="center", font=font_spec)
         row_headers.append(row_id)
@@ -334,12 +334,12 @@ def render_grid():
 
     # Draw the grid lines
     y = 0
-    for row in range(1, num_rows + 2):
+    for row in range(1, number_of_visible_rows + 2):
         y += cell_height
         canvas.create_line(0, y, canvas_width*2, y, fill="gray")
 
     x = cell_width // 2
-    for col in range(1, num_cols + 2):
+    for col in range(1, number_of_visible_cols + 2):
         canvas.create_line(x, 0, x, canvas_height*2, fill="gray")
         x += cell_width
 
@@ -347,10 +347,10 @@ def render_grid():
 def create_cells():
     global cells
     cells = []
-    new_cells = worksheet.render_cells(0, 0, num_cols, num_rows)
-    for row in range(num_rows):
+    new_cells = worksheet.render_cells(0, 0, number_of_visible_cols, number_of_visible_rows)
+    for row in range(number_of_visible_rows):
         row_cells = []
-        for col in range(num_cols):
+        for col in range(number_of_visible_cols):
             #value = cells[col, row]
 
             cell_x = row_header_width  + (cell_width  * col)
@@ -373,11 +373,11 @@ def create_cells():
 def update_cells():
     new_cells = worksheet.render_cells(
         viewport_offset_col, viewport_offset_row,
-        num_cols, num_rows)
+        number_of_visible_cols, number_of_visible_rows)
 
-    for row in range(num_rows):
+    for row in range(number_of_visible_rows):
         row_cells = []
-        for col in range(num_cols):
+        for col in range(number_of_visible_cols):
             cell_id = cells[row][col]
             new_text = new_cells[row][col]
             if new_text is None:
@@ -562,10 +562,10 @@ def motion_canvas(event):
     row1, col1 = cell_index(event, 'worldspace')
     row2, col2 = selected_cell_row, selected_cell_col
 
-    row1 = max(0, min(row1, num_rows - 1))
-    row2 = max(0, min(row2, num_rows - 1))
-    col1 = max(0, min(col1, num_cols - 1))
-    col2 = max(0, min(col2, num_cols - 1))
+    #row1 = max(0, min(row1, number_of_visible_rows - 1))
+    #row2 = max(0, min(row2, number_of_visible_rows - 1))
+    #col1 = max(0, min(col1, number_of_visible_cols - 1))
+    #col2 = max(0, min(col2, number_of_visible_cols - 1))
 
     if row1 > row2:
         row1, row2 = row2, row1
@@ -659,8 +659,8 @@ def edit_cell(row, col):
     global selected_cell_row
     global selected_cell_col
 
-    row = max(0, min(row, num_rows - 1))
-    col = max(0, min(col, num_cols - 1))
+    #row = max(0, min(row, number_of_visible_rows - 1))
+    #col = max(0, min(col, number_of_visible_cols - 1))
 
     select_cell(row, col)
 
@@ -692,8 +692,8 @@ def select_cell(row, col):
 
     #print((row, col))
 
-    row = max(0, min(row, num_rows - 1))
-    col = max(0, min(col, num_cols - 1))
+    #row = max(0, min(row, number_of_visible_rows - 1))
+    col = max(0, min(col, number_of_visible_cols - 1))
 
     select_range(row, col, row, col)
 
