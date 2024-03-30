@@ -83,9 +83,38 @@ class Worksheet():
         return cells
 
 
+    def expand_macro(self, row, col, formula):
+        if formula != 'sum above':
+            return formula
+
+        row1, col1 = row - 1, col
+        row2, col2 = row - 1, col
+
+        while row1 >= 1:
+            value = self.cell_values.get((row1, col1), None)
+            if value is None:
+                break
+            row1 -= 1
+
+        lhs = rc_to_a1_ref(row1, col1)
+        rhs = rc_to_a1_ref(row2, col2)
+
+        if lhs == rhs:
+            target = lhs
+        else:
+            #target = f"range_reference('{lhs}', '{rhs}')"
+            target = f'{lhs}:{rhs}'
+
+        new_formula = f'sum({target})'
+
+        return new_formula
+
+
     def set_formula(self, row, col, new_formula=None):
         address = (row, col)
         #print(f'set {address=}, {new_formula=}')
+
+        new_formula = self.expand_macro(row, col, new_formula)
 
         assignment = None
 
