@@ -4,7 +4,14 @@ import subprocess
 from tkinter import ttk
 from spreadsheet import Worksheet
 
+# Done
+# alt + =  autosum
+
 # TODO
+
+# default formatting for formula
+# default formatting for raw value
+
 # scrolling
 # filters
 # cut, copy and paste
@@ -30,7 +37,6 @@ from spreadsheet import Worksheet
 # ctrl+d fill down
 # ctrl+r fill right
 
-# alt+=  autosum
 
 # insert selection into formula
 
@@ -837,6 +843,7 @@ def on_keypress(event):
 
     #print(event)
 
+    #print(cursor_mode)
     match cursor_mode:
         case 'excel':
             return on_keypress_excel(event)
@@ -863,6 +870,12 @@ def on_keypress_excel(event):
             pass
         case 'Shift_L' | 'Shift_R':
             pass
+        case 'equal':
+            row, col = get_row_col('cell_selection', 'worldspace')
+            autosum_formula = 'sum above'
+            set_formula(row, col, autosum_formula)
+            select_cell(row, col)
+            return None
         case _:
             pass
 
