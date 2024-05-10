@@ -905,16 +905,52 @@ def on_keypress_vim(event):
 root.bind('<KeyPress>', on_keypress)
 
 
+def on_copy(event=None):
+    (row1, col1), (row2, col2) = get_rect_row_col('selected_range', 'worldspace')
+    #print( (row1, col1), (row2, col2) )
+
+    num_selected_cols = col2 - col1 + 1
+    num_selected_rows = row2 - row1 + 1
+    #print((num_selected_rows, num_selected_cols))
+
+
+    new_cells = worksheet.render_cells(
+            col1, row1,
+            num_selected_cols,
+            num_selected_rows,
+            )
+    #print(new_cells)
+
+    lines = []
+    for row in new_cells:
+        #print(row)
+        line = '\t'.join('' if cell_value is None else str(cell_value) for cell_value in row)
+        lines.append(line)
+
+
+    tsv = '\n'.join(lines)
+    #print(repr(tsv))
+
+    root.clipboard_clear()
+    root.clipboard_append(tsv)
+
+    return 'break'
+
+
 def on_paste(event=None):
     text = root.clipboard_get()
-    # print(repr(text))
+    #print(repr(text))
 
     if '\t' in text:
         clipboard_rows = tsv_to_list(text)
     elif ',' in text:
         clipboard_rows = csv_to_list(text)
+    elif '\n' in text: # handle single column
+        clipboard_rows = text.strip('\n').split('\n')
     else:
         clipboard_rows = [[text.strip('\n')]]
+
+    #print(clipboard_rows)
 
     row = selected_cell_row
 
@@ -933,16 +969,19 @@ def on_paste(event=None):
         row += 1
 
 
-#root.bind('<Control-c>', on_copy)
-#root.bind('<Command-c>', on_copy)
+root.bind('<Control-c>', on_copy)
+root.bind('<Command-c>', on_copy)
 
 root.bind('<Control-v>', on_paste)
 root.bind('<Command-v>', on_paste)
 
 
 set_formula(1, 1, '1')
-set_formula(2, 1, '2')
-set_formula(3, 1, '3')
+set_formula(1, 2, '2')
+set_formula(2, 1, '3')
+set_formula(2, 2, '4')
+set_formula(3, 1, '5')
+set_formula(3, 2, '6')
 set_formula(4, 1, 'sum above')
 
 select_cell(0, 0)
@@ -958,7 +997,7 @@ select_cell(4, 1)
 
 def tsv_to_list(t):
     lines = t.strip().split('\n')
-    elems = [line.split('\t') for line in lines]
+    elems = [[None if c == '' else c for c in line.split('\t')] for line in lines]
     return elems
 
 
@@ -969,6 +1008,9 @@ def csv_to_list(t):
 
 
 def parse_number(s):
+    if s is None:
+        return None
+
     s = s.strip()
     if s.startswith('£'):
         s = s[1:]

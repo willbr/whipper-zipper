@@ -69,6 +69,7 @@ class Worksheet():
 
 
     def render_cells(self, x_offset, y_offset, width, height):
+        #print(f'render_cells({x_offset=}, {y_offset=}, {width=}, {height=})')
         cells = []
         row = y_offset
         for i in range(height):
