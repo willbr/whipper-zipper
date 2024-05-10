@@ -814,6 +814,23 @@ def edit_cursor(event):
         return
     edit_cell(selected_cell_row, selected_cell_col)
 
+def delete_selection(event):
+    (row1, col1), (row2, col2) = get_rect_row_col('selected_range', 'worldspace')
+    #print( (row1, col1), (row2, col2) )
+
+    for row in range(row1, row2+1):
+        for col in range(col1, col2+1):
+            #print(f'{row}, {col}')
+            set_formula(row, col, '')
+
+    #set_formula(row, col, s)
+
+    #select_range(row1, col1, row2, col2)
+
+
+    return 'break'
+
+
 render_worksheet()
 
 # Bind the scrollable area to the mouse wheel
@@ -860,7 +877,7 @@ def on_keypress_excel(event):
             return escape(event)
         case 'Tab' | 'Return' | 'Up' | 'Down' | 'Left' | 'Right':
             return move_cursor(event)
-        case 'BackSpace' | 'Delete':
+        case 'BackSpace':
             pass
         case 'Prior' | 'Next':
             pass
@@ -876,6 +893,9 @@ def on_keypress_excel(event):
             set_formula(row, col, autosum_formula)
             select_cell(row, col)
             return None
+        case 'Delete':
+            return delete_selection(event)
+
         case _:
             pass
 

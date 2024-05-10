@@ -135,6 +135,8 @@ class Worksheet():
             else:
                 changes = [(address, repr(new_value))]
 
+        #print(changes)
+
         if assignment and col != 0:
             lhs_address = (row, col - 1)
             lhs_formula = self.get_formula(*lhs_address)
@@ -142,6 +144,7 @@ class Worksheet():
                 lhs_changes = self.set_formula(*lhs_address, f"'{assignment}'")
                 changes.extend(lhs_changes)
 
+        #print(changes)
 
         if new_value != old_value:
             #print(f'dirty {new_value=} != {old_value=}')
@@ -153,6 +156,8 @@ class Worksheet():
             for precedent in precedents:
                 precedent_changes = self.set_formula(*precedent, new_formula=None)
                 changes.extend(precedent_changes)
+
+        #print(changes)
 
         return changes
 
