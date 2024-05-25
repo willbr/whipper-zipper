@@ -244,7 +244,11 @@ class Worksheet():
         for node in ast.walk(formula_ast):
             if not isinstance(node, ast.Call):
                 continue
-            #print(node)
+            #print(ast.dump(node))
+            if not isinstance(node.func, ast.Name):
+                # skip if node.func isn't a name
+                # e.g. b5(5) -> cell_reference('b5')(5)
+                continue
             func_name = node.func.id
             if func_name == 'cell_reference':
                 cell_name = node.args[0].value
