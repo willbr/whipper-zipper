@@ -4,6 +4,10 @@ import subprocess
 from tkinter import ttk
 from spreadsheet import Worksheet
 
+from rich.traceback import install
+install()
+
+
 # Done
 # alt + =  autosum
 
