@@ -2,6 +2,7 @@ import ast
 import re
 import time
 from functools import wraps
+from types import FunctionType
 
 def time_function(func):
     @wraps(func)
@@ -132,7 +133,10 @@ class Worksheet():
         else:
             if isinstance(new_value, float):
                 changes = [(address, f'{new_value:0.2f}')]
+            elif isinstance(new_value, FunctionType):
+                changes = [(address, new_formula)]
             else:
+                #print(type(new_value))
                 changes = [(address, repr(new_value))]
 
         #print(changes)

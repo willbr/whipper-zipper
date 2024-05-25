@@ -1007,6 +1007,7 @@ set_formula(2, 2, '4')
 set_formula(3, 1, '5')
 set_formula(3, 2, '6')
 set_formula(4, 1, 'sum above')
+set_formula(4, 1, 'lambda x : x+1')
 
 select_cell(0, 0)
 select_cell(4, 1)
