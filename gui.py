@@ -57,7 +57,7 @@ root.update_idletasks()
 
 # Define the number of rows and columns in the spreadsheet
 number_of_visible_rows = 60
-number_of_visible_cols = 10
+number_of_visible_cols = 20
 
 worksheet = Worksheet()
 cells = None
@@ -113,8 +113,8 @@ viewport_offset_col = 0
 viewport_width  = 6
 viewport_height = 19
 
-viewport_max_row = 20
-viewport_max_col = 6
+viewport_max_row = 200
+viewport_max_col = 20
 
 selected_cell_row = 0
 selected_cell_col = 0
@@ -283,8 +283,20 @@ cell_formula.bind('<KeyRelease>', mirror_text)
 
 
 def scroll_x(*args):
-    print(args)
-    pass
+    #print(args)
+    match args:
+        case 'moveto', offset:
+            offset = float(offset)
+            new_offset_cols = int(viewport_max_col * offset)
+            update_scroll(viewport_offset_row, new_offset_cols)
+        case 'scroll', offset, 'pages':
+            page_size = 10
+            offset = int(offset) * page_size
+            new_offset_cols = viewport_offset_col + offset
+            update_scroll(viewport_offset_row, new_offset_cols)
+        case _:
+            raise ValueError(f'{args=}')
+
 
 def scroll_y(*args):
     #print(args)
@@ -346,11 +358,11 @@ def render_grid():
     y = 0
     for row in range(1, number_of_visible_rows + 2):
         y += cell_height
-        canvas.create_line(0, y, canvas_width*2, y, fill="gray")
+        canvas.create_line(0, y, canvas_width*4, y, fill="gray")
 
     x = cell_width // 2
     for col in range(1, number_of_visible_cols + 2):
-        canvas.create_line(x, 0, x, canvas_height*2, fill="gray")
+        canvas.create_line(x, 0, x, canvas_height*4, fill="gray")
         x += cell_width
 
 
@@ -650,10 +662,13 @@ def update_scroll(row, col):
 
     first = row1 / viewport_max_row
     last  = row2 / viewport_max_row
-
     #print((first, last))
-
     scrollbar_y.set(first, last)
+
+    first = col1 / viewport_max_col
+    last  = col2 / viewport_max_col
+    #print((first, last))
+    scrollbar_x.set(first, last)
 
     update_headers()
     update_cells()
@@ -1007,7 +1022,7 @@ set_formula(2, 2, '4')
 set_formula(3, 1, '5')
 set_formula(3, 2, '6')
 set_formula(4, 1, 'sum above')
-set_formula(4, 1, 'lambda x : x+1')
+#set_formula(4, 1, 'lambda x : x+1')
 
 select_cell(0, 0)
 select_cell(4, 1)
