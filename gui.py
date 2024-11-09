@@ -573,10 +573,10 @@ def motion_canvas(event):
     row1, col1 = cell_index(event, 'worldspace')
     row2, col2 = selected_cell_row, selected_cell_col
 
-    #row1 = max(0, min(row1, number_of_visible_rows - 1))
-    #row2 = max(0, min(row2, number_of_visible_rows - 1))
-    #col1 = max(0, min(col1, number_of_visible_cols - 1))
-    #col2 = max(0, min(col2, number_of_visible_cols - 1))
+    row1 = max(0, row1)
+    row2 = max(0, row2)
+    col1 = max(0, col1)
+    col2 = max(0, col2)
 
     if row1 > row2:
         row1, row2 = row2, row1
@@ -670,8 +670,8 @@ def edit_cell(row, col):
     global selected_cell_row
     global selected_cell_col
 
-    #row = max(0, min(row, number_of_visible_rows - 1))
-    #col = max(0, min(col, number_of_visible_cols - 1))
+    row = max(0, row)
+    col = max(0, col)
 
     select_cell(row, col)
 
@@ -703,8 +703,8 @@ def select_cell(row, col):
 
     #print((row, col))
 
-    #row = max(0, min(row, number_of_visible_rows - 1))
-    col = max(0, min(col, number_of_visible_cols - 1))
+    row = max(0, row)
+    col = max(0, col)
 
     select_range(row, col, row, col)
 
