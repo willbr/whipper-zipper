@@ -261,7 +261,7 @@ def cell_formula_on_enter(event):
 
     shift_pressed = event.state & shift_mask
     offset = -1 if shift_pressed else 1
-    edit_cell(row + offset, col)
+    select_cell(row + offset, col)
     return "break"
 
 def cell_formula_on_tab(event):
@@ -271,7 +271,7 @@ def cell_formula_on_tab(event):
     set_formula(row, col, formula)
     shift_pressed = event.state & shift_mask
     offset = -1 if shift_pressed else 1
-    edit_cell(row, col + offset)
+    select_cell(row, col + offset)
     return "break"
 
 
