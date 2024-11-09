@@ -875,7 +875,22 @@ def escape(event):
     select_cell(selected_cell_row, selected_cell_col)
     root.focus_set()
 
+def on_keypress_cell_formula(event):
+    match event.keysym:
+        case 'equal':
+            row, col = get_row_col('cell_selection', 'worldspace')
+            autosum_formula = 'sum above'
+            set_formula(row, col, autosum_formula)
+            select_cell(row, col)
+            return None
+        case _:
+            pass
+
+cell_formula.bind('<KeyPress>', on_keypress_cell_formula)
 cell_formula.bind('<Escape>', escape)
+
+
+
 
 def on_keypress(event):
     if event.widget != root:
