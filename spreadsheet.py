@@ -3,6 +3,7 @@ import re
 import time
 from functools import wraps
 from types import FunctionType
+from functools import lru_cache
 
 def time_function(func):
     @wraps(func)
@@ -31,8 +32,21 @@ def a1_ref_to_rc(address):
     return (row, col)
 
 
+@lru_cache(None)
+def column_name(c: int) -> str:
+    # excel style column names
+    a = []
+    while True:
+        a.append(chr(97 + (c % 26)))
+        if c < 26:
+            break
+        c = c//26 - 1
+    name = ''.join(reversed(a))
+    return name
+
+
 def rc_to_a1_ref(row, col):
-    col_name = chr(97 + col)
+    col_name = column_name(col)
     row_name = row + 1
     name = f'{col_name}{row_name}'
     return name

@@ -2,7 +2,10 @@ import platform
 import tkinter as tk
 import subprocess
 from tkinter import ttk
-from spreadsheet import Worksheet
+from spreadsheet import (
+    Worksheet,
+    column_name,
+)
 
 from rich.traceback import install
 install()
@@ -346,7 +349,7 @@ def update_headers():
         row += 1
 
     for col_id in col_headers:
-        canvas.itemconfig(col_id, text=chr(97 + col))
+        canvas.itemconfig(col_id, text=column_name(col))
         col += 1
 
 
@@ -535,7 +538,7 @@ def cell_index(event, space):
 
 
 def cell_name_a1_style(row, col):
-    col_name = chr(97 + col)
+    col_name = column_name(col)
     return col_name, row + 1
 
 
@@ -638,6 +641,7 @@ def scroll_canvas(event):
 
 
 def update_scroll(row, col):
+    #print('update_scroll')
     global viewport_offset_row
     global viewport_offset_col
     global viewport_max_row
