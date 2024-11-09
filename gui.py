@@ -286,45 +286,45 @@ cell_formula.bind('<KeyRelease>', mirror_text)
 
 
 def scroll_x(*args):
+    #print('scroll_x')
     #print(args)
     match args:
         case 'moveto', offset:
             offset = float(offset)
             new_offset_cols = int(viewport_max_col * offset)
-            update_scroll(viewport_offset_row, new_offset_cols)
+            update_scroll(viewport_offset_row, new_offset_cols, x_offset=offset)
         case 'scroll', offset, 'pages':
             page_size = 10
             offset = int(offset) * page_size
             new_offset_cols = viewport_offset_col + offset
-            update_scroll(viewport_offset_row, new_offset_cols)
+            update_scroll(viewport_offset_row, new_offset_cols, x_offset=offset)
         case _:
             raise ValueError(f'{args=}')
 
 
 def scroll_y(*args):
+    #print('scroll_y')
     #print(args)
     match args:
         case 'moveto', offset:
             offset = float(offset)
             new_offset_rows = int(viewport_max_row * offset)
-            update_scroll(new_offset_rows, viewport_offset_col)
+            update_scroll(new_offset_rows, viewport_offset_col, y_offset=offset)
         case 'scroll', offset, 'pages':
             page_size = 10
             offset = int(offset) * page_size
             new_offset_rows = viewport_offset_row + offset
-            update_scroll(new_offset_rows, viewport_offset_col)
+            update_scroll(new_offset_rows, viewport_offset_col, y_offset=offset)
         case _:
             raise ValueError(f'{args=}')
 
 # Create a horizontal scrollbar
 scrollbar_x = tk.Scrollbar(canvas_frame, orient="horizontal", command=scroll_x)
 scrollbar_x.grid(row=2, column=1, sticky="ew")
-scrollbar_x.set(0.0, 0.5)
 
 # Create a vertical scrollbar
 scrollbar_y = tk.Scrollbar(canvas_frame, orient="vertical", command=scroll_y)
 scrollbar_y.grid(row=1, column=2, sticky="ns")
-scrollbar_y.set(0.0, 0.5)
 
 def render_headers():
     x = first_cell_x
@@ -508,8 +508,7 @@ def update_selection():
     render_range_selection()
 
 
-def set_formula(row, col, formula):
-
+def set_formula(row: int, col: int, formula: str):
     changes = worksheet.set_formula(row, col, formula)
     #print(changes)
     for change in changes:
@@ -632,6 +631,7 @@ def render_range_selection():
 
 
 def scroll_canvas(event):
+    #print('scroll_canvas')
     if event.delta > 0:
         row_offset = -4
     else:
@@ -640,7 +640,7 @@ def scroll_canvas(event):
     update_scroll(viewport_offset_row + row_offset, viewport_offset_col)
 
 
-def update_scroll(row, col):
+def update_scroll(row, col, x_offset=None, y_offset=None):
     #print('update_scroll')
     global viewport_offset_row
     global viewport_offset_col
@@ -667,17 +667,23 @@ def update_scroll(row, col):
     first = row1 / viewport_max_row
     last  = row2 / viewport_max_row
     #print((first, last))
-    scrollbar_y.set(first, last)
+
+    if y_offset:
+        scrollbar_y.set(y_offset, y_offset + (last - first))
+    else:
+        scrollbar_y.set(first, last)
 
     first = col1 / viewport_max_col
     last  = col2 / viewport_max_col
     #print((first, last))
-    scrollbar_x.set(first, last)
+    if x_offset:
+        scrollbar_x.set(x_offset, x_offset + (last - first))
+    else:
+        scrollbar_x.set(first, last)
 
     update_headers()
     update_cells()
     update_selection()
-
 
 def double_click_canvas(event):
     row, col = cell_index(event, 'worldspace')
@@ -876,13 +882,15 @@ def escape(event):
     root.focus_set()
 
 def on_keypress_cell_formula(event):
+    #print(f'{event.state:x}')
     match event.keysym:
         case 'equal':
-            row, col = get_row_col('cell_selection', 'worldspace')
-            autosum_formula = 'sum above'
-            set_formula(row, col, autosum_formula)
-            select_cell(row, col)
-            return None
+            if event.state & 0x20000:
+                row, col = get_row_col('cell_selection', 'worldspace')
+                autosum_formula = 'sum above'
+                set_formula(row, col, autosum_formula)
+                select_cell(row, col)
+                return None
         case _:
             pass
 
@@ -926,11 +934,12 @@ def on_keypress_excel(event):
         case 'Shift_L' | 'Shift_R':
             pass
         case 'equal':
-            row, col = get_row_col('cell_selection', 'worldspace')
-            autosum_formula = 'sum above'
-            set_formula(row, col, autosum_formula)
-            select_cell(row, col)
-            return None
+            if event.state & 0x20000:
+                row, col = get_row_col('cell_selection', 'worldspace')
+                autosum_formula = 'sum above'
+                set_formula(row, col, autosum_formula)
+                select_cell(row, col)
+                return None
         case 'Delete':
             return delete_selection(event)
 
@@ -1033,6 +1042,7 @@ root.bind('<Command-c>', on_copy)
 root.bind('<Control-v>', on_paste)
 root.bind('<Command-v>', on_paste)
 
+update_scroll(0, 0)
 
 set_formula(1, 1, '1')
 set_formula(1, 2, '2')
@@ -1052,6 +1062,8 @@ select_cell(4, 1)
 #set_formula(2, 0, 'a2')
 #set_formula(3, 0, 'sum(a1:a3)')
 #exit()
+
+
 
 
 def tsv_to_list(t):
