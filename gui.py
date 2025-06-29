@@ -930,8 +930,8 @@ def on_keypress_excel(event):
             pass
         case 'Shift_L' | 'Shift_R':
             pass
-        case 'equal':
-            if event.state & alt_mask:
+        case 'equal' | 'notequal':
+            if event.state & alt_mask or event.keysym == 'notequal':
                 row, col = get_row_col('cell_selection', 'worldspace')
                 autosum_formula = 'sum above'
                 set_formula(row, col, autosum_formula)
