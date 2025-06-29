@@ -913,7 +913,7 @@ def on_keypress(event):
 
 def on_keypress_excel(event):
     #print(event)
-    print(f"Key: '{event.keysym}', State: {event.state} (Hex: {event.state:#06x}, Bin: {event.state:#010b})")
+    #print(f"Key: '{event.keysym}', State: {event.state} (Hex: {event.state:#06x}, Bin: {event.state:#010b})")
     alt_mask   = 0x20000
     match event.keysym:
         case 'Escape':
@@ -1060,7 +1060,7 @@ set_formula(2, 1, '3')
 set_formula(2, 2, '4')
 set_formula(3, 1, '5')
 set_formula(3, 2, '6')
-set_formula(4, 1, 'sum above')
+set_formula(4, 1, '=sum above')
 #set_formula(4, 1, 'lambda x : x+1')
 
 select_cell(0, 0)

@@ -92,7 +92,8 @@ class Worksheet():
             col = x_offset
             for j in range(width):
                 value = self.get_value(row, col)
-                row_cells.append(value)
+                display_value = self._format_display_value(value, (row, col))
+                row_cells.append(display_value)
                 col += 1
             cells.append(row_cells)
             row += 1
@@ -100,7 +101,7 @@ class Worksheet():
 
 
     def expand_macro(self, row, col, formula):
-        if formula != 'sum above':
+        if formula != '=sum above':
             return formula
 
         row1, col1 = row - 1, col
@@ -121,9 +122,22 @@ class Worksheet():
             #target = f"range_reference('{lhs}', '{rhs}')"
             target = f'{lhs}:{rhs}'
 
-        new_formula = f'sum({target})'
+        new_formula = f'=sum({target})'
 
         return new_formula
+
+
+    def _format_display_value(self, value, address):
+        if value is None:
+            return ''
+        elif isinstance(value, int):
+            return f'{value:,}'
+        elif isinstance(value, float):
+            return f'{value:0.2f}'
+        elif callable(value):
+            return value
+        else:
+            return value
 
 
     def set_formula(self, row, col, new_formula=None):
@@ -132,35 +146,14 @@ class Worksheet():
 
         new_formula = self.expand_macro(row, col, new_formula)
 
-        assignment = None
-
-        if new_formula is not None:
-            matched = re.match('^s*(\w+)\s*=\s*(.*)', new_formula)
-            if matched:
-                assignment, new_formula = matched.groups()
-
         old_value = self.cell_values.get(address, None)
         new_value = self.eval_formula(row, col, new_formula)
 
         if new_value is None:
             changes = [(address, '')]
         else:
-            if isinstance(new_value, float):
-                changes = [(address, f'{new_value:0.2f}')]
-            elif isinstance(new_value, FunctionType):
-                changes = [(address, new_formula)]
-            else:
-                #print(type(new_value))
-                changes = [(address, repr(new_value))]
-
-        #print(changes)
-
-        if assignment and col != 0:
-            lhs_address = (row, col - 1)
-            lhs_formula = self.get_formula(*lhs_address)
-            if lhs_formula == '':
-                lhs_changes = self.set_formula(*lhs_address, f"'{assignment}'")
-                changes.extend(lhs_changes)
+            display_value = self._format_display_value(new_value, address)
+            changes = [(address, display_value)]
 
         #print(changes)
 
@@ -198,10 +191,25 @@ class Worksheet():
         else:
             self.cell_formulas[address] = formula
 
+        formula = formula.strip()
+
         #print(f'eval {address} {formula}')
 
-        if formula.strip() == '':
+        if formula == '':
             return None
+
+        is_literal = formula.startswith('=') == False
+        if is_literal:
+            try:
+                result = int(formula)
+            except (ValueError, TypeError):
+                try:
+                    result = float(formula)
+                except (ValueError, TypeError):
+                    result = formula # it's a string
+            return result
+
+        formula = formula[1:] # strip '='
 
         py_formula = formula
         py_formula = re.sub(r'(\w+):(\w+)', r"range_reference('\1', '\2')", py_formula)
