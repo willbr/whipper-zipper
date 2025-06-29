@@ -11,9 +11,6 @@ from rich.traceback import install
 install()
 
 
-# Done
-# alt + =  autosum
-
 # TODO
 
 # default formatting for formula
@@ -29,17 +26,10 @@ install()
 # o insert row below
 # O insert row above
 
-# Ctrl+Space select column
-# Shift+Space select row
-
 # ctrl+arrow to jump to next data
 
 # cell formatting
 # ctrl+f find
-
-# ctrl+n new workbook
-# ctrl+o open workbook
-# ctrl+s save workbook
 
 # ctrl+d fill down
 # ctrl+r fill right
@@ -61,6 +51,9 @@ root.update_idletasks()
 # Define the number of rows and columns in the spreadsheet
 number_of_visible_rows = 60
 number_of_visible_cols = 20
+
+max_rows=1000
+max_cols=1000
 
 worksheet = Worksheet()
 cells = None
@@ -515,6 +508,10 @@ def set_formula(row: int, col: int, formula: str):
         (row, col), new_value = change
         row -= viewport_offset_row
         col -= viewport_offset_col
+        if row < 0: continue
+        if col < 0: continue
+        if row >= number_of_visible_rows: continue
+        if col >= number_of_visible_cols: continue
         cell_id = cells[row][col]
         canvas.itemconfig(cell_id, text=new_value)
 
@@ -898,8 +895,6 @@ cell_formula.bind('<KeyPress>', on_keypress_cell_formula)
 cell_formula.bind('<Escape>', escape)
 
 
-
-
 def on_keypress(event):
     if event.widget != root:
         return
@@ -918,6 +913,8 @@ def on_keypress(event):
 
 def on_keypress_excel(event):
     #print(event)
+    print(f"Key: '{event.keysym}', State: {event.state} (Hex: {event.state:#06x}, Bin: {event.state:#010b})")
+    alt_mask   = 0x20000
     match event.keysym:
         case 'Escape':
             return escape(event)
@@ -934,14 +931,27 @@ def on_keypress_excel(event):
         case 'Shift_L' | 'Shift_R':
             pass
         case 'equal':
-            if event.state & 0x20000:
+            if event.state & alt_mask:
                 row, col = get_row_col('cell_selection', 'worldspace')
                 autosum_formula = 'sum above'
                 set_formula(row, col, autosum_formula)
                 select_cell(row, col)
-                return None
+                return
         case 'Delete':
             return delete_selection(event)
+        case 'space':
+            if event.state & shift_mask:
+                row, col = get_row_col('cell_selection', 'worldspace')
+                select_range(row, 0, row, max_cols)
+                #print(f'shift+space {row=} {col=}')
+                return
+            elif event.state & ctrl_mask:
+                row, col = get_row_col('cell_selection', 'worldspace')
+                select_range(0, col, max_rows, col)
+                #print('ctrl+space')
+                return
+            else:
+                pass
 
         case _:
             pass
